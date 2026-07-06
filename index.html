@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+<title>Tank 95</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="game-wrap">
+    <canvas id="game"></canvas>
+
+    <div id="hud">
+      <div id="hud-left">
+        <div id="player-health-wrap">
+          <div id="player-health-track">
+            <div id="player-health-fill"></div>
+          </div>
+        </div>
+        <div id="sub-stats">
+          <span id="level-val">LV 1</span>
+          <span id="ring-val">🪙 0</span>
+          <span id="charge-val">⚡ 0</span>
+        </div>
+      </div>
+      <div id="boss-bar-wrap" class="hidden">
+        <div id="boss-name"></div>
+        <div id="boss-bar-track">
+          <div id="boss-bar-fill"></div>
+        </div>
+      </div>
+      <div id="score">⭐ <span id="score-val">0</span></div>
+    </div>
+
+    <div id="level-banner" class="hidden"></div>
+
+    <button id="pause-btn" class="hidden">⏸</button>
+
+    <div id="start-screen" class="overlay">
+      <h1>TANK <span class="num">95</span></h1>
+      <p>Swipe left/right to dodge, swipe up to jump, swipe down to slide. Collect coins for power shots. Beat every boss!</p>
+      <button id="start-btn">▶ PLAY</button>
+    </div>
+
+    <div id="end-screen" class="overlay hidden">
+      <h1 id="end-title">Game Over</h1>
+      <p id="end-msg"></p>
+      <button id="retry-btn">↻ PLAY AGAIN</button>
+    </div>
+
+    <div id="pause-screen" class="overlay hidden">
+      <h1>Paused</h1>
+      <button id="resume-btn">▶ RESUME</button>
+    </div>
+
+    <div id="swipe-hint" class="hidden">⬅ swipe ➡ &nbsp;·&nbsp; ⬆ jump &nbsp;·&nbsp; ⬇ slide</div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>
