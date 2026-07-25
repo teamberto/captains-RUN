@@ -93,7 +93,12 @@ const sfx = {
   ring: () => tone(1046, 0.08, 'sine', 0.12, 0, 1568),
   cookie: () => { [523, 659, 784, 1046].forEach((f, i) => tone(f, 0.16, 'sine', 0.13, i * 0.06)); },
   sticker: () => { [659, 880, 1046, 1318, 1568].forEach((f, i) => tone(f, 0.2, 'triangle', 0.13, i * 0.055)); },
-  shatter: () => { noiseBurst(0.38, 0.3); tone(120, 0.4, 'sawtooth', 0.17, 0, 48); tone(300, 0.2, 'square', 0.1, 0.02, 90); },
+  shatter: () => {
+    noiseBurst(0.14, 0.26); noiseBurst(0.1, 0.2);
+    tone(90, 0.16, 'square', 0.12, 0.02, 1400);
+    tone(1800, 0.07, 'square', 0.08, 0.1, 220);
+    tone(140, 0.2, 'sawtooth', 0.1, 0.18, 60);
+  },
   kick: () => { noiseBurst(0.1, 0.1); tone(420, 0.13, 'triangle', 0.1, 0, 780); },
   smash: () => { noiseBurst(0.26, 0.26); tone(140, 0.28, 'sawtooth', 0.16, 0, 55); },
   jump: () => tone(400, 0.12, 'triangle', 0.1, 0, 700),
@@ -1084,10 +1089,13 @@ function makeFireTrapMesh(theme) {
 }
 
 // ---------- flooded gap: cold water with a circling shark fin ----------
+// Low metalness on purpose: there's no environment map in this scene, so a
+// metallic water surface reflects nothing and reads black at grazing angles.
+// The emissive is what keeps it looking like lit water from any camera height.
 const waterSurfMat = new THREE.MeshStandardMaterial({
-  color: 0x2a8ec0, roughness: 0.1, metalness: 0.35,
-  emissive: 0x10506e, emissiveIntensity: 0.85,
-  transparent: true, opacity: 0.92,
+  color: 0x35a2d6, roughness: 0.22, metalness: 0.04,
+  emissive: 0x1a6f96, emissiveIntensity: 1.15,
+  transparent: true, opacity: 0.94,
 });
 const waterDeepMat = new THREE.MeshStandardMaterial({ color: 0x0a3348, roughness: 0.7 });
 const foamMat = new THREE.MeshStandardMaterial({
@@ -1119,34 +1127,36 @@ function makeWaterGapMesh() {
 
   // shark: dorsal fin + tail tip + a wake, cruising across the gap
   const shark = new THREE.Group();
-  // tall swept dorsal fin - the whole point is that it reads instantly
-  const fin = new THREE.Mesh(new THREE.ConeGeometry(0.42, 0.95, 4), sharkMat);
-  fin.rotation.y = Math.PI / 4;
-  fin.position.set(0, 0.46, 0);
-  fin.scale.set(0.42, 1, 1.15);
+  // ONE dorsal fin only - a swept scythe shape, dark against the bright water
+  const finShape = new THREE.Shape();
+  finShape.moveTo(-0.34, 0);
+  finShape.quadraticCurveTo(-0.1, 0.5, 0.3, 0.98);   // leading edge sweeps up and back
+  finShape.quadraticCurveTo(0.16, 0.42, 0.3, 0);     // trailing notch
+  finShape.lineTo(-0.34, 0);
+  const fin = new THREE.Mesh(
+    new THREE.ExtrudeGeometry(finShape, { depth: 0.1, bevelEnabled: true, bevelSize: 0.02, bevelThickness: 0.02, bevelSegments: 1 }),
+    sharkMat,
+  );
+  fin.position.set(0, 0, -0.05);
   shark.add(fin);
-  const finRidge = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.5, 4), sharkPaleMat);
-  finRidge.rotation.y = Math.PI / 4;
-  finRidge.position.set(0, 0.62, 0.05);
-  finRidge.scale.set(0.34, 1, 1);
-  shark.add(finRidge);
-  // hint of the back breaking the surface
-  const back = new THREE.Mesh(new THREE.SphereGeometry(0.3, 12, 8), sharkMat);
-  back.scale.set(0.7, 0.32, 1.7);
-  back.position.set(0, 0.04, -0.2);
-  shark.add(back);
-  const tail = new THREE.Mesh(new THREE.ConeGeometry(0.26, 0.5, 4), sharkMat);
-  tail.rotation.set(0, Math.PI / 4, 0.32);
-  tail.position.set(0, 0.2, -0.95);
-  tail.scale.set(0.34, 1, 1);
-  shark.add(tail);
-  const wake = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.05, 1.6), foamMat);
-  wake.position.set(0, 0.03, -0.5);
+  // pale trailing edge to separate the fin from the dark water behind it
+  const finEdge = new THREE.Mesh(
+    new THREE.ExtrudeGeometry(finShape, { depth: 0.03, bevelEnabled: false }),
+    sharkPaleMat,
+  );
+  finEdge.scale.set(0.78, 0.82, 1);
+  finEdge.position.set(-0.02, 0.02, 0.07);
+  shark.add(finEdge);
+
+  // waterline foam where the fin cuts through, plus a trailing wake
+  const collar = new THREE.Mesh(new THREE.SphereGeometry(0.3, 12, 8), foamMat);
+  collar.scale.set(1.35, 0.16, 0.7);
+  collar.position.set(0, 0.03, 0.02);
+  shark.add(collar);
+  const wake = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.05, 1.7), foamMat);
+  wake.position.set(0, 0.02, -0.85);
   shark.add(wake);
-  const splash = new THREE.Mesh(new THREE.SphereGeometry(0.26, 10, 8), foamMat);
-  splash.scale.set(1.5, 0.22, 1);
-  splash.position.set(0, 0.05, 0.1);
-  shark.add(splash);
+
   shark.position.y = -0.24;
   g.add(shark);
 
@@ -1284,7 +1294,7 @@ function makeBananaMesh() {
   tip.rotation.z = -2.4;
   g.add(tip);
   g.rotation.z = 0.35;
-  g.scale.setScalar(1.56);   // 2x
+  g.scale.setScalar(1.24);
   return g;
 }
 
@@ -1498,6 +1508,168 @@ function updateHud() {
 
 function rectClose(z1, z2, range) { return Math.abs(z1 - z2) < range; }
 
+// ---------- obstacles ----------
+// Both obstacle types are deliberately NOT rock-coloured: dark glazed ceramic
+// and gold metal both separate cleanly from the pale stone walkway, and they
+// look breakable, which matters now that the kick can smash either one.
+const URN_BODY = 0x2f8ba6;      // teal glaze, bright enough to survive dim chambers
+const URN_BODY_DARK = 0x14424f;
+const URN_GOLD = 0xe8b44a;
+const URN_CRACK = 0xffb85c;
+
+// pottery profile for LatheGeometry - gives a real thrown-pot silhouette
+function urnProfile(h, r) {
+  return [
+    new THREE.Vector2(0.0, 0),
+    new THREE.Vector2(r * 0.55, 0),
+    new THREE.Vector2(r * 0.9, h * 0.18),
+    new THREE.Vector2(r, h * 0.45),
+    new THREE.Vector2(r * 0.78, h * 0.78),
+    new THREE.Vector2(r * 0.58, h * 0.9),
+    new THREE.Vector2(r * 0.7, h),
+  ];
+}
+
+// JUMP or KICK: a stack of cracked ceramic urns, obviously smashable
+function makeUrnStack() {
+  const g = new THREE.Group();
+  const bodyMat = new THREE.MeshStandardMaterial({
+    color: URN_BODY, roughness: 0.4, metalness: 0.12,
+    emissive: 0x0e3a46, emissiveIntensity: 0.75,
+  });
+  const darkMat = new THREE.MeshStandardMaterial({ color: URN_BODY_DARK, roughness: 0.5 });
+  const goldMat = new THREE.MeshStandardMaterial({
+    color: URN_GOLD, roughness: 0.3, metalness: 0.8,
+    emissive: URN_GOLD, emissiveIntensity: 0.22,
+  });
+  const crackMat = new THREE.MeshStandardMaterial({
+    color: URN_CRACK, emissive: URN_CRACK, emissiveIntensity: 1.3,
+  });
+
+  function urn(h, r, y, s) {
+    const u = new THREE.Group();
+    const body = new THREE.Mesh(new THREE.LatheGeometry(urnProfile(h, r), 16), bodyMat);
+    u.add(body);
+    // painted bands
+    [h * 0.32, h * 0.62].forEach(by => {
+      const band = new THREE.Mesh(new THREE.TorusGeometry(r * 0.97, 0.022, 6, 18), goldMat);
+      band.position.y = by;
+      band.rotation.x = Math.PI / 2;
+      u.add(band);
+    });
+    // rim
+    const rim = new THREE.Mesh(new THREE.TorusGeometry(r * 0.7, 0.03, 6, 18), goldMat);
+    rim.position.y = h;
+    rim.rotation.x = Math.PI / 2;
+    u.add(rim);
+    // shadowed inner mouth
+    const mouth = new THREE.Mesh(new THREE.CircleGeometry(r * 0.66, 16), darkMat);
+    mouth.rotation.x = -Math.PI / 2;
+    mouth.position.y = h - 0.008;
+    u.add(mouth);
+    // hairline cracks, faintly lit so "breakable" reads at a glance
+    for (let i = 0; i < 3; i++) {
+      const ang = (i / 3) * Math.PI * 2 + 0.6;
+      const crack = new THREE.Mesh(new THREE.BoxGeometry(0.026, h * 0.55, 0.026), crackMat);
+      crack.position.set(Math.cos(ang) * r * 0.95, h * 0.45, Math.sin(ang) * r * 0.95);
+      crack.rotation.z = (i - 1) * 0.22;
+      u.add(crack);
+    }
+    u.position.y = y;
+    u.scale.setScalar(s);
+    return u;
+  }
+
+  g.add(urn(0.56, 0.35, 0, 1));        // wide base pot
+  // narrow collar so the upper pot reads as a separate object
+  const collar = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.2, 0.07, 12), darkMat);
+  collar.position.y = 0.57;
+  g.add(collar);
+  g.add(urn(0.5, 0.26, 0.61, 0.62));   // smaller pot balanced on top
+  // a couple of loose shards at the base
+  [[-0.4, 0.2], [0.42, -0.16]].forEach(([x, z]) => {
+    const shard = new THREE.Mesh(new THREE.ConeGeometry(0.09, 0.16, 4), darkMat);
+    shard.position.set(x, 0.07, z);
+    shard.rotation.set(0.3, Math.random() * 3, 0.4);
+    g.add(shard);
+  });
+  g.userData.phase = Math.random() * Math.PI * 2;
+  return g;
+}
+
+// SLIDE or KICK: a half-dropped temple portcullis. The lit floor strip and the
+// row of hanging spikes make "go under this" unmistakable.
+function makePortcullis(theme) {
+  const g = new THREE.Group();
+  const stoneMat = new THREE.MeshStandardMaterial({ color: theme.stoneTint, roughness: 0.9 });
+  const darkMat = new THREE.MeshStandardMaterial({ color: OBSTACLE_ROCK_DEEP, roughness: 0.95 });
+  const goldMat = new THREE.MeshStandardMaterial({
+    color: URN_GOLD, roughness: 0.28, metalness: 0.85,
+    emissive: URN_GOLD, emissiveIntensity: 0.3,
+  });
+  const glowMat = new THREE.MeshStandardMaterial({
+    color: 0xffe9a8, emissive: 0xffd070, emissiveIntensity: 1.6,
+    transparent: true, opacity: 0.9,
+  });
+
+  // side posts with capitals
+  [-0.86, 0.86].forEach(x => {
+    const post = new THREE.Mesh(new THREE.BoxGeometry(0.32, 2.7, 0.42), stoneMat);
+    post.position.set(x, 1.35, 0);
+    g.add(post);
+    const cap = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.2, 0.54), goldMat);
+    cap.position.set(x, 2.62, 0);
+    g.add(cap);
+    const foot = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.18, 0.54), darkMat);
+    foot.position.set(x, 0.09, 0);
+    g.add(foot);
+  });
+
+  // lintel across the top
+  const lintel = new THREE.Mesh(new THREE.BoxGeometry(2.1, 0.34, 0.5), stoneMat);
+  lintel.position.set(0, 2.5, 0);
+  g.add(lintel);
+  const lintelTrim = new THREE.Mesh(new THREE.BoxGeometry(2.16, 0.09, 0.56), goldMat);
+  lintelTrim.position.set(0, 2.3, 0);
+  g.add(lintelTrim);
+
+  // the grille itself - bars stopping well above a sliding runner
+  const grille = new THREE.Group();
+  const ironMat = new THREE.MeshStandardMaterial({ color: 0x231f1c, roughness: 0.55, metalness: 0.6 });
+  const BAR_BOTTOM = 1.34;
+  for (let i = -2; i <= 2; i++) {
+    const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.075, 2.3 - BAR_BOTTOM + 0.6, 8), ironMat);
+    bar.position.set(i * 0.4, BAR_BOTTOM + (2.3 - BAR_BOTTOM + 0.6) / 2 - 0.3, 0);
+    grille.add(bar);
+    const spike = new THREE.Mesh(new THREE.ConeGeometry(0.095, 0.24, 7), goldMat);
+    spike.position.set(i * 0.4, BAR_BOTTOM - 0.1, 0);
+    spike.rotation.x = Math.PI;
+    grille.add(spike);
+  }
+  // horizontal braces
+  [1.7, 2.15].forEach(y => {
+    const brace = new THREE.Mesh(new THREE.BoxGeometry(1.78, 0.09, 0.09), ironMat);
+    brace.position.set(0, y, 0);
+    grille.add(brace);
+  });
+  g.add(grille);
+
+  // bright strip on the floor marking the safe gap
+  const strip = new THREE.Mesh(new THREE.BoxGeometry(1.85, 0.045, 0.5), glowMat);
+  strip.position.set(0, 0.035, 0);
+  g.add(strip);
+  // chevrons pointing down into the gap
+  [-0.55, 0, 0.55].forEach(x => {
+    const chev = new THREE.Mesh(new THREE.ConeGeometry(0.15, 0.26, 4), glowMat);
+    chev.position.set(x, 0.92, 0.34);
+    chev.rotation.x = Math.PI;
+    g.add(chev);
+  });
+
+  g.userData = { grille, phase: Math.random() * Math.PI * 2 };
+  return g;
+}
+
 // ---------- level construction ----------
 function buildLevel(levelNum) {
   const data = LEVEL_DATA[(levelNum - 1) % LEVEL_DATA.length];
@@ -1517,76 +1689,20 @@ function buildLevel(levelNum) {
   gaps.forEach(g => { if (g.mesh) { scene.remove(g.mesh); disposeObject(g.mesh); } });
   stickerPickups.forEach(s => { scene.remove(s.mesh); disposeObject(s.mesh); });
 
-  // Obstacle rock is deliberately theme-independent: a consistent dark stone
-  // against a consistently light floor is what keeps it readable everywhere.
-  const rockMat = new THREE.MeshStandardMaterial({ color: OBSTACLE_ROCK, roughness: 0.95 });
-  const rockDeepMat = new THREE.MeshStandardMaterial({ color: OBSTACLE_ROCK_DEEP, roughness: 1 });
-  const rockEdgeMat = new THREE.MeshStandardMaterial({
-    color: OBSTACLE_EDGE, roughness: 0.6,
-    emissive: OBSTACLE_EDGE, emissiveIntensity: 0.35,
-  });
-  const rockMossMat = new THREE.MeshStandardMaterial({ color: 0x7aa050, roughness: 0.9 });
   crates = data.crates.map(c => ({ ...c, hit: false }));
   crates.forEach(c => {
-    const cg = new THREE.Group();
-    // craggy boulder: irregular icosahedron, squashed so it reads as jump-over height
-    const boulder = new THREE.Mesh(new THREE.IcosahedronGeometry(0.62, 1), rockMat);
-    boulder.scale.set(1, 0.82, 0.92);
-    boulder.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
-    cg.add(boulder);
-    // smaller rocks clustered at the base for a natural pile
-    [[-0.42, -0.15, 0.28], [0.4, -0.2, -0.22], [0.05, -0.28, 0.4]].forEach(([x, y, z]) => {
-      const pebble = new THREE.Mesh(new THREE.IcosahedronGeometry(0.24, 0), rockDeepMat);
-      pebble.position.set(x, y, z);
-      pebble.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, 0);
-      cg.add(pebble);
-    });
-    // lit crest along the top edge - reads as "jump me" at a glance
-    const crest = new THREE.Mesh(new THREE.IcosahedronGeometry(0.3, 0), rockEdgeMat);
-    crest.scale.set(1.5, 0.3, 1.1);
-    crest.position.set(0, 0.44, 0);
-    cg.add(crest);
-    const moss = new THREE.Mesh(new THREE.SphereGeometry(0.22, 8, 6, 0, Math.PI * 2, 0, Math.PI / 2), rockMossMat);
-    moss.position.set(0.1, 0.32, 0.2);
-    moss.rotation.x = -0.4;
-    cg.add(moss);
-    cg.position.set(LANES_X[c.lane], 0.45, c.z);
-    castAll(cg);
-    scene.add(cg);
-    c.mesh = cg;
+    c.mesh = makeUrnStack();
+    c.mesh.position.set(LANES_X[c.lane], 0, c.z);
+    castAll(c.mesh);
+    scene.add(c.mesh);
   });
 
   bars = data.bars.map(b => ({ ...b, hit: false }));
   bars.forEach(b => {
-    const bg = new THREE.Group();
-    [-0.7, 0.7].forEach(x => {
-      const pillar = new THREE.Mesh(new THREE.IcosahedronGeometry(0.38, 0), rockDeepMat);
-      pillar.scale.set(0.75, 1.9, 0.75);
-      pillar.position.set(x, 0.75, 0);
-      pillar.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, 0);
-      bg.add(pillar);
-    });
-    // low rock overhang/ledge - must slide under
-    const ledge = new THREE.Mesh(new THREE.IcosahedronGeometry(0.55, 1), rockMat);
-    ledge.scale.set(2.0, 0.5, 0.85);
-    ledge.position.set(0, 1.45, 0);
-    ledge.rotation.set(Math.random() * 0.3, Math.random() * Math.PI, Math.random() * 0.3);
-    bg.add(ledge);
-    // bright mineral vein along the underside - the duck-under cue
-    const vein = new THREE.Mesh(new THREE.BoxGeometry(1.62, 0.1, 0.16), rockEdgeMat);
-    vein.position.set(0, 1.27, 0.16);
-    bg.add(vein);
-    const veinBack = new THREE.Mesh(new THREE.BoxGeometry(1.62, 0.1, 0.16), rockEdgeMat);
-    veinBack.position.set(0, 1.27, -0.16);
-    bg.add(veinBack);
-    // lit top edge so the overhang mass separates from the wall behind it
-    const cap = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.08, 0.7), rockEdgeMat);
-    cap.position.set(0, 1.68, 0);
-    bg.add(cap);
-    bg.position.set(LANES_X[b.lane], 0, b.z);
-    castAll(bg);
-    scene.add(bg);
-    b.mesh = bg;
+    b.mesh = makePortcullis(theme);
+    b.mesh.position.set(LANES_X[b.lane], 0, b.z);
+    castAll(b.mesh);
+    scene.add(b.mesh);
   });
 
   gaps = data.gaps.map(g => ({ ...g }));
@@ -1640,37 +1756,67 @@ function buildLevel(levelNum) {
   exitFillEl.style.width = '0%';
 }
 
-// Stone slab bursting apart, played when a chamber is cleared. Purely a DOM
-// overlay so it never competes with the WebGL frame for time.
+// Chamber transition: a digital glitch across the frame. Grabs the current
+// rendered frame, slices it into horizontal bands and jitters them sideways
+// with an RGB split, plus static and scanlines. Falls back to plain colour
+// bands if the canvas can't be read.
 function playShatter() {
-  const COLS = 6, ROWS = 5;
+  let shot = null;
+  try {
+    // capture must happen immediately after a render in the same task
+    renderer.render(scene, camera);
+    shot = renderer.domElement.toDataURL('image/jpeg', 0.55);
+    if (!shot || shot.length < 512) shot = null;
+  } catch (e) { shot = null; }
+
+  const W = shatterEl.clientWidth || window.innerWidth;
+  const H = shatterEl.clientHeight || window.innerHeight;
+  const SLICES = 16;
+  const sliceH = H / SLICES;
+
   shatterEl.innerHTML = '';
-  const w = 100 / COLS, h = 100 / ROWS;
-  for (let r = 0; r < ROWS; r++) {
-    for (let c = 0; c < COLS; c++) {
-      const shard = document.createElement('div');
-      shard.className = 'shard';
-      shard.style.left = `${c * w}%`;
-      shard.style.top = `${r * h}%`;
-      shard.style.width = `${w + 0.4}%`;
-      shard.style.height = `${h + 0.4}%`;
-      // blow outward from the centre, faster at the edges
-      const dx = (c + 0.5) / COLS - 0.5;
-      const dy = (r + 0.5) / ROWS - 0.5;
-      const mag = 380 + Math.random() * 260;
-      shard.style.setProperty('--tx', `${dx * mag}px`);
-      shard.style.setProperty('--ty', `${dy * mag + 120}px`);
-      shard.style.setProperty('--rot', `${(Math.random() - 0.5) * 220}deg`);
-      shard.style.setProperty('--dur', `${820 + Math.random() * 320}ms`);
-      // random chipped corner so the pieces aren't uniform rectangles
-      const k = 8 + Math.random() * 18;
-      shard.style.clipPath = `polygon(${k}% 0%, 100% ${Math.random() * 20}%, ${100 - k * 0.6}% 100%, 0% ${80 + Math.random() * 20}%)`;
-      shatterEl.appendChild(shard);
+  for (let i = 0; i < SLICES; i++) {
+    const band = document.createElement('div');
+    band.className = 'gband';
+    band.style.top = `${i * sliceH}px`;
+    band.style.height = `${sliceH + 1}px`;
+    if (shot) {
+      band.style.backgroundImage = `url(${shot})`;
+      band.style.backgroundSize = `${W}px ${H}px`;
+      band.style.backgroundPosition = `0px ${-i * sliceH}px`;
+    } else {
+      band.style.background = i % 2 ? 'rgba(180,200,215,.5)' : 'rgba(40,60,80,.55)';
     }
+    // sideways kick, alternating direction, biggest near the middle
+    const centreBias = 1 - Math.abs(i / (SLICES - 1) - 0.5) * 1.4;
+    const dir = i % 2 ? 1 : -1;
+    band.style.setProperty('--gx', `${dir * (10 + Math.random() * 70) * centreBias}px`);
+    band.style.setProperty('--gx2', `${-dir * (6 + Math.random() * 40) * centreBias}px`);
+    band.style.setProperty('--gdelay', `${Math.random() * 90}ms`);
+    // a few bands get an inverted / colour-shifted stutter
+    if (Math.random() < 0.28) band.classList.add('gband-hot');
+    shatterEl.appendChild(band);
   }
+
+  // RGB split ghosts of the whole frame
+  if (shot) {
+    ['gr', 'gb'].forEach(cls => {
+      const ghost = document.createElement('div');
+      ghost.className = `gghost ${cls}`;
+      ghost.style.backgroundImage = `url(${shot})`;
+      ghost.style.backgroundSize = `${W}px ${H}px`;
+      shatterEl.appendChild(ghost);
+    });
+  }
+  const noise = document.createElement('div');
+  noise.className = 'gnoise';
+  shatterEl.appendChild(noise);
+  const scan = document.createElement('div');
+  scan.className = 'gscan';
+  shatterEl.appendChild(scan);
+
   shatterEl.classList.remove('hidden');
   flashEl.classList.remove('hidden');
-  // restart the flash animation
   flashEl.style.animation = 'none';
   void flashEl.offsetWidth;
   flashEl.style.animation = '';
@@ -1680,7 +1826,7 @@ function playShatter() {
     shatterEl.classList.add('hidden');
     flashEl.classList.add('hidden');
     shatterEl.innerHTML = '';
-  }, 1250);
+  }, 780);
 }
 
 function showLevelBanner(levelNum) {
@@ -1834,6 +1980,8 @@ function update(dt) {
   // crate collisions (must jump; pass-through damage, no wall-blocking)
   crates.forEach(c => {
     if (c.hit) return;
+    const ut = performance.now() * 0.0022 + c.mesh.userData.phase;
+    c.mesh.rotation.z = Math.sin(ut) * 0.022;
     const sameLane = player.laneIndex === c.lane;
     // spin kick shatters the boulder before it can land a hit
     if (player.kicking && sameLane && rectClose(player.z, c.z, KICK_RANGE)) {
@@ -1841,8 +1989,8 @@ function update(dt) {
       c.mesh.visible = false;
       score += 25; scoreEl.textContent = score;
       camShake = 0.28;
-      spawnSparkles(c.mesh.position.x, 0.6, c.mesh.position.z, 18, 0x9a8a70, 0.25);
-      spawnSparkles(c.mesh.position.x, 0.45, c.mesh.position.z, 8, 0xe8d8b0, 0.6);
+      spawnSparkles(c.mesh.position.x, 0.55, c.mesh.position.z, 18, 0x1d4d5c, 0.35);
+      spawnSparkles(c.mesh.position.x, 0.4, c.mesh.position.z, 10, 0xe8b44a, 0.9);
       sfx.smash();
       return;
     }
@@ -1854,14 +2002,17 @@ function update(dt) {
   // rock tunnels: slide under them, or kick straight through
   bars.forEach(b => {
     if (b.hit) return;
+    const gt = performance.now() * 0.0016 + b.mesh.userData.phase;
+    b.mesh.userData.grille.position.y = Math.sin(gt) * 0.035;
+    b.mesh.userData.grille.rotation.z = Math.sin(gt * 0.7) * 0.012;
     const sameLane = player.laneIndex === b.lane;
     if (player.kicking && sameLane && rectClose(player.z, b.z, KICK_RANGE)) {
       b.hit = true;
       b.mesh.visible = false;
       score += 35; scoreEl.textContent = score;
       camShake = 0.32;
-      spawnSparkles(b.mesh.position.x, 1.2, b.mesh.position.z, 20, 0x9a8a70, 0.25);
-      spawnSparkles(b.mesh.position.x, 0.5, b.mesh.position.z, 10, 0xe8d8b0, 0.6);
+      spawnSparkles(b.mesh.position.x, 1.6, b.mesh.position.z, 20, 0xe8b44a, 0.9);
+      spawnSparkles(b.mesh.position.x, 0.9, b.mesh.position.z, 10, 0xffe9a8, 1.1);
       sfx.smash();
       return;
     }
@@ -1878,8 +2029,9 @@ function update(dt) {
       // fin patrols across the gap and banks as it turns
       ud.shark.position.x = Math.sin(t * 1.1) * 0.62;
       ud.shark.position.z = Math.cos(t * 0.7) * 1.1;
-      ud.shark.rotation.y = Math.sin(t * 1.1 + Math.PI / 2) * 0.5;
-      ud.shark.rotation.z = Math.cos(t * 1.1) * 0.12;
+      // travelling right -> sweep trails left, and vice versa
+      ud.shark.scale.x = Math.cos(t * 1.1) >= 0 ? 1 : -1;
+      ud.shark.rotation.z = Math.cos(t * 1.1) * 0.1;
       ud.surf.position.y = -0.24 + Math.sin(t * 2.2) * 0.02;
     }
     if (gp.hit) return;
