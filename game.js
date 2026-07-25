@@ -19,10 +19,10 @@ let state = 'start'; // start | playing | win | lose
 // ---------- constants ----------
 const LANES_X = [2.4, 0, -2.4]; // index 0/1/2 = screen-left/center/right (camera faces +Z, mirroring world X)
 const FORWARD_SPEED = 14;
-const SPEED_PER_LEVEL = 1.2;
-const MAX_FORWARD_SPEED = 24;
-const JUMP_V = 9.2;
-const GRAVITY = 28;
+const SPEED_PER_LEVEL = 0.85;
+const MAX_FORWARD_SPEED = 21.5;
+const JUMP_V = 11.4;
+const GRAVITY = 26;
 const CRATE_HEIGHT = 0.9;
 const SLIDE_DURATION = 0.55;
 const HIT_RANGE = 1.1;
@@ -30,6 +30,9 @@ const FINISH_Z = 262;
 const ROAD_LEN = FINISH_Z + 40;
 const PLAYER_MAX_HEALTH = 20;
 const HEART_HEAL_AMOUNT = 5;
+// slide crouch tuning, calibrated so the runner's head clears the duck-under ledges
+const SLIDE_SQUASH = 0.74;
+const SLIDE_FOOT_LIFT = 0.23;
 const CAMERA_HEIGHT = 3.0;
 const CAMERA_DISTANCE = 7.6;
 
@@ -75,7 +78,7 @@ const sfx = {
 
 // ---------- level theme data ----------
 const LEVEL_DATA = [
-  { // Level 1: Temple Gate - sunset light pouring in through the entrance
+  { // 1 - Temple Gate: sunset pouring in through the entrance
     theme: {
       name: 'Temple Gate', skyTop: 0x2a1a0c, skyBottom: 0xe0953c, fog: 0x9c7444,
       groundTint: 0x9d968c, plankTint: 0xdcd2c2, rock: 0x7d7264,
@@ -85,11 +88,11 @@ const LEVEL_DATA = [
     crates: [{ z: 30, lane: 1 }, { z: 80, lane: 2 }, { z: 155, lane: 1 }],
     bars: [{ z: 65, lane: 1 }, { z: 170, lane: 0 }],
     gaps: [{ z: 115, lane: 2 }, { z: 200, lane: 0 }],
-    enemies: [{ z: 55, lane: 0 }, { z: 105, lane: 1 }, { z: 130, lane: 0 }, { z: 180, lane: 2 }, { z: 205, lane: 0 }],
+    enemies: [{ z: 55, lane: 0 }, { z: 105, lane: 1 }, { z: 180, lane: 2 }],
     rings: [[15, 1], [18, 1], [21, 1], [42, 0], [45, 0], [48, 0], [95, 2], [98, 2], [101, 2], [140, 1], [143, 1], [146, 1], [190, 2], [193, 2], [196, 2]],
     hearts: [[10, 2], [225, 1]],
   },
-  { // Level 2: Idol Hall - deep interior, torchlit, watched by stone faces
+  { // 2 - Idol Hall: deep interior, torchlit, watched by stone faces
     theme: {
       name: 'Idol Hall', skyTop: 0x140c06, skyBottom: 0x6a3f18, fog: 0x4a3826,
       groundTint: 0x7d766c, plankTint: 0xb3a897, rock: 0x5f584c,
@@ -99,11 +102,26 @@ const LEVEL_DATA = [
     crates: [{ z: 35, lane: 0 }, { z: 90, lane: 1 }, { z: 160, lane: 2 }],
     bars: [{ z: 60, lane: 2 }, { z: 150, lane: 1 }],
     gaps: [{ z: 75, lane: 1 }, { z: 120, lane: 0 }, { z: 210, lane: 2 }],
-    enemies: [{ z: 50, lane: 1 }, { z: 100, lane: 0 }, { z: 135, lane: 2 }, { z: 175, lane: 1 }, { z: 195, lane: 0 }, { z: 215, lane: 2 }],
+    enemies: [{ z: 50, lane: 1 }, { z: 100, lane: 0 }, { z: 175, lane: 1 }, { z: 215, lane: 2 }],
     rings: [[20, 2], [23, 2], [26, 2], [45, 1], [48, 1], [51, 1], [110, 0], [113, 0], [116, 0], [145, 2], [148, 2], [151, 2], [185, 1], [188, 1], [191, 1]],
     hearts: [[10, 0], [230, 2]],
   },
-  { // Level 3: Lava Vault - the temple starts to burn
+  { // 3 - Crystal Cavern: cool blue break from the warm halls
+    theme: {
+      name: 'Crystal Cavern', skyTop: 0x04121f, skyBottom: 0x1f5f7a, fog: 0x1b4658,
+      groundTint: 0x7d8a92, plankTint: 0xaebcc4, rock: 0x46545e,
+      hemiSky: 0x8fd8f0, hemiGround: 0x0e2430, sunColor: 0xbfe8ff,
+      stoneTint: 0x8fa3ae, idolTint: 0x7fe4ff, torchColor: 0x49c8ff,
+      propAccent: 'crystal',
+    },
+    crates: [{ z: 28, lane: 2 }, { z: 88, lane: 0 }, { z: 148, lane: 1 }, { z: 205, lane: 2 }],
+    bars: [{ z: 62, lane: 0 }, { z: 130, lane: 2 }, { z: 185, lane: 1 }],
+    gaps: [{ z: 45, lane: 1 }, { z: 108, lane: 1 }, { z: 168, lane: 0 }],
+    enemies: [{ z: 72, lane: 1 }, { z: 118, lane: 2 }, { z: 160, lane: 0 }, { z: 220, lane: 1 }],
+    rings: [[14, 0], [17, 0], [20, 0], [52, 2], [55, 2], [58, 2], [98, 1], [101, 1], [104, 1], [138, 0], [141, 0], [144, 0], [195, 2], [198, 2], [201, 2]],
+    hearts: [[12, 1], [228, 0]],
+  },
+  { // 4 - Lava Vault: the temple starts to burn
     theme: {
       name: 'Lava Vault', skyTop: 0x1a0603, skyBottom: 0xc03a10, fog: 0x77341c,
       groundTint: 0x756055, plankTint: 0xb09384, rock: 0x4d3a34,
@@ -113,23 +131,67 @@ const LEVEL_DATA = [
     crates: [{ z: 40, lane: 2 }, { z: 95, lane: 0 }, { z: 165, lane: 1 }],
     bars: [{ z: 70, lane: 0 }, { z: 155, lane: 2 }],
     gaps: [{ z: 55, lane: 1 }, { z: 130, lane: 2 }, { z: 195, lane: 0 }],
-    enemies: [{ z: 60, lane: 2 }, { z: 110, lane: 1 }, { z: 140, lane: 0 }, { z: 185, lane: 2 }, { z: 205, lane: 1 }, { z: 220, lane: 0 }],
+    enemies: [{ z: 60, lane: 2 }, { z: 110, lane: 1 }, { z: 140, lane: 0 }, { z: 205, lane: 1 }],
     rings: [[25, 0], [28, 0], [31, 0], [80, 1], [83, 1], [86, 1], [120, 2], [123, 2], [126, 2], [150, 0], [153, 0], [156, 0], [200, 1], [203, 1], [206, 1]],
     hearts: [[12, 1], [232, 2]],
   },
-  { // Level 4: Collapsing Sanctum - the final run for daylight
+  { // 5 - Flooded Cistern: ankle-deep water either side of the causeway
+    theme: {
+      name: 'Flooded Cistern', skyTop: 0x061613, skyBottom: 0x2a6b62, fog: 0x1d4b46,
+      groundTint: 0x6f8480, plankTint: 0xa8b8b2, rock: 0x3f5450,
+      hemiSky: 0x86ded0, hemiGround: 0x102a26, sunColor: 0xc8f4ec,
+      stoneTint: 0x8ba39c, idolTint: 0x6fe0c0, torchColor: 0x3ad0b0,
+      water: true,
+    },
+    crates: [{ z: 33, lane: 1 }, { z: 84, lane: 2 }, { z: 142, lane: 0 }, { z: 198, lane: 1 }],
+    bars: [{ z: 58, lane: 2 }, { z: 118, lane: 0 }, { z: 178, lane: 2 }],
+    gaps: [{ z: 70, lane: 1 }, { z: 132, lane: 2 }, { z: 212, lane: 0 }],
+    enemies: [{ z: 48, lane: 0 }, { z: 100, lane: 1 }, { z: 158, lane: 2 }, { z: 222, lane: 1 }],
+    rings: [[18, 2], [21, 2], [24, 2], [62, 1], [65, 1], [68, 1], [105, 0], [108, 0], [111, 0], [150, 1], [153, 1], [156, 1], [188, 0], [191, 0], [194, 0]],
+    hearts: [[10, 1], [230, 2]],
+  },
+  { // 6 - Golden Treasury: the hoard room, bright and gaudy
+    theme: {
+      name: 'Golden Treasury', skyTop: 0x30200a, skyBottom: 0xf0c050, fog: 0xb08c3a,
+      groundTint: 0xada08a, plankTint: 0xf0e2c0, rock: 0x8a7846,
+      hemiSky: 0xffe8a8, hemiGround: 0x6a5218, sunColor: 0xfff0c0,
+      stoneTint: 0xd8c08a, idolTint: 0xffd23a, torchColor: 0xffc23a,
+    },
+    crates: [{ z: 26, lane: 0 }, { z: 76, lane: 1 }, { z: 136, lane: 2 }, { z: 192, lane: 0 }],
+    bars: [{ z: 52, lane: 1 }, { z: 112, lane: 2 }, { z: 172, lane: 0 }],
+    gaps: [{ z: 64, lane: 0 }, { z: 124, lane: 1 }, { z: 204, lane: 2 }],
+    enemies: [{ z: 44, lane: 2 }, { z: 92, lane: 0 }, { z: 152, lane: 1 }, { z: 216, lane: 2 }],
+    rings: [[13, 1], [16, 1], [19, 1], [36, 2], [39, 2], [42, 2], [86, 0], [89, 0], [92, 0], [144, 1], [147, 1], [150, 1], [182, 2], [185, 2], [188, 2], [210, 0], [213, 0]],
+    hearts: [[10, 0], [226, 1]],
+  },
+  { // 7 - Collapsing Sanctum: the roof is coming down
     theme: {
       name: 'Collapsing Sanctum', skyTop: 0x0a0710, skyBottom: 0x4a2a5a, fog: 0x2f2436,
       groundTint: 0x7b7580, plankTint: 0xb6adb4, rock: 0x494150,
       hemiSky: 0xc0a0d8, hemiGround: 0x1a1018, sunColor: 0xffd8a0,
       stoneTint: 0x8e7a76, idolTint: 0xffd479, torchColor: 0xffc23a,
     },
-    crates: [{ z: 32, lane: 1 }, { z: 85, lane: 2 }, { z: 150, lane: 0 }],
-    bars: [{ z: 58, lane: 2 }, { z: 165, lane: 1 }],
+    crates: [{ z: 32, lane: 1 }, { z: 85, lane: 2 }, { z: 150, lane: 0 }, { z: 200, lane: 1 }],
+    bars: [{ z: 58, lane: 2 }, { z: 122, lane: 1 }, { z: 175, lane: 0 }],
     gaps: [{ z: 70, lane: 0 }, { z: 110, lane: 1 }, { z: 190, lane: 2 }],
-    enemies: [{ z: 45, lane: 0 }, { z: 95, lane: 1 }, { z: 125, lane: 2 }, { z: 170, lane: 0 }, { z: 200, lane: 1 }, { z: 218, lane: 2 }],
+    enemies: [{ z: 45, lane: 0 }, { z: 95, lane: 1 }, { z: 125, lane: 2 }, { z: 165, lane: 0 }, { z: 218, lane: 2 }],
     rings: [[16, 2], [19, 2], [22, 2], [50, 0], [53, 0], [56, 0], [100, 1], [103, 1], [106, 1], [155, 2], [158, 2], [161, 2], [195, 0], [198, 0], [201, 0]],
     hearts: [[10, 0], [230, 1]],
+  },
+  { // 8 - Sky Terrace: out on the roof, daylight, the last dash
+    theme: {
+      name: 'Sky Terrace', skyTop: 0x2b7fd0, skyBottom: 0xd8f0ff, fog: 0xbfe4f5,
+      groundTint: 0xc0bcae, plankTint: 0xefe6d2, rock: 0x9a9282,
+      hemiSky: 0xdff2ff, hemiGround: 0x8a8270, sunColor: 0xfffaf0,
+      stoneTint: 0xd8cdb4, idolTint: 0xffd86a, torchColor: 0xffb03a,
+      openSky: true,
+    },
+    crates: [{ z: 24, lane: 2 }, { z: 72, lane: 0 }, { z: 128, lane: 1 }, { z: 186, lane: 2 }],
+    bars: [{ z: 48, lane: 1 }, { z: 104, lane: 0 }, { z: 164, lane: 2 }, { z: 208, lane: 1 }],
+    gaps: [{ z: 60, lane: 2 }, { z: 116, lane: 1 }, { z: 150, lane: 0 }, { z: 196, lane: 0 }],
+    enemies: [{ z: 38, lane: 0 }, { z: 88, lane: 2 }, { z: 140, lane: 1 }, { z: 176, lane: 0 }, { z: 220, lane: 2 }],
+    rings: [[12, 1], [15, 1], [18, 1], [32, 0], [35, 0], [38, 0], [80, 2], [83, 2], [86, 2], [134, 0], [137, 0], [140, 0], [170, 1], [173, 1], [176, 1], [212, 2], [215, 2]],
+    hearts: [[10, 1], [200, 2], [232, 0]],
   },
 ];
 
@@ -408,17 +470,35 @@ function makeTempleProp(x, z, theme, variant, torchLights) {
     rim.position.y = 1.56; g.add(rim);
     const bowl = new THREE.Mesh(new THREE.CylinderGeometry(0.44, 0.26, 0.4, 12), goldMat);
     bowl.position.y = 1.82; g.add(bowl);
-    const flameMat = new THREE.MeshStandardMaterial({
+    const glowMat = new THREE.MeshStandardMaterial({
       color: theme.torchColor, emissive: theme.torchColor, emissiveIntensity: 2.6,
       transparent: true, opacity: 0.92,
     });
-    const flame = new THREE.Mesh(new THREE.ConeGeometry(0.28, 0.85, 8), flameMat);
-    flame.position.y = 2.4;
-    g.add(flame);
-    const emberMat = new THREE.MeshStandardMaterial({ color: 0xfff0b0, emissive: 0xffd070, emissiveIntensity: 2.2 });
-    const ember = new THREE.Mesh(new THREE.ConeGeometry(0.14, 0.42, 6), emberMat);
-    ember.position.y = 2.3;
-    g.add(ember);
+    let flame;
+    if (theme.propAccent === 'crystal') {
+      // a cluster of lit shards instead of an open flame
+      flame = new THREE.Group();
+      for (let i = 0; i < 5; i++) {
+        const ang = (i / 5) * Math.PI * 2;
+        const shard = new THREE.Mesh(new THREE.ConeGeometry(0.11, 0.5 + (i % 2) * 0.3, 5), glowMat);
+        shard.position.set(Math.cos(ang) * 0.17, 0.1 + (i % 2) * 0.1, Math.sin(ang) * 0.17);
+        shard.rotation.set(Math.sin(ang) * 0.28, 0, -Math.cos(ang) * 0.28);
+        flame.add(shard);
+      }
+      const spire = new THREE.Mesh(new THREE.ConeGeometry(0.13, 0.8, 6), glowMat);
+      spire.position.y = 0.28;
+      flame.add(spire);
+      flame.position.y = 2.24;
+      g.add(flame);
+    } else {
+      flame = new THREE.Mesh(new THREE.ConeGeometry(0.28, 0.85, 8), glowMat);
+      flame.position.y = 2.4;
+      g.add(flame);
+      const emberMat = new THREE.MeshStandardMaterial({ color: 0xfff0b0, emissive: 0xffd070, emissiveIntensity: 2.2 });
+      const ember = new THREE.Mesh(new THREE.ConeGeometry(0.14, 0.42, 6), emberMat);
+      ember.position.y = 2.3;
+      g.add(ember);
+    }
     // one real light per brazier, budgeted by the caller
     if (torchLights.length < 6) {
       const light = new THREE.PointLight(theme.torchColor, 2.4, 22, 2);
@@ -524,12 +604,26 @@ function buildRoadForLevel(levelGaps, theme) {
 
   // temple walls running the length of the corridor
   const wallMat = new THREE.MeshStandardMaterial({ color: theme.rock, roughness: 0.95 });
+  const wallH = theme.openSky ? 1.4 : 14;
   [-13.6, 13.6].forEach(x => {
-    const wall = new THREE.Mesh(new THREE.BoxGeometry(1.6, 14, ROAD_LEN), wallMat);
-    wall.position.set(x, 7, ROAD_LEN / 2 - 10);
+    const wall = new THREE.Mesh(new THREE.BoxGeometry(1.6, wallH, ROAD_LEN), wallMat);
+    wall.position.set(x, wallH / 2, ROAD_LEN / 2 - 10);
     wall.receiveShadow = true;
     scene.add(wall); roadMeshes.push(wall);
   });
+
+  // shallow water flanking the causeway
+  if (theme.water) {
+    const waterMat = new THREE.MeshStandardMaterial({
+      color: 0x2f8f88, roughness: 0.12, metalness: 0.35,
+      transparent: true, opacity: 0.72,
+    });
+    [-9, 9].forEach(x => {
+      const water = new THREE.Mesh(new THREE.BoxGeometry(10, 0.06, ROAD_LEN), waterMat);
+      water.position.set(x, 0.02, ROAD_LEN / 2 - 10);
+      scene.add(water); roadMeshes.push(water);
+    });
+  }
 
   // alternating pillars / braziers / idols down both sides
   let variant = 0;
@@ -589,6 +683,8 @@ function castAll(obj) {
   return obj;
 }
 
+// Nested joint rig so the run cycle can bend at knees and elbows.
+// Hierarchy: g > {hips > legs > knees, torso > {head, arms > elbows}}
 function buildRunner(scale) {
   const g = new THREE.Group();
   const skinMat = new THREE.MeshStandardMaterial({ color: 0xd9a074, roughness: 0.72 });
@@ -601,185 +697,207 @@ function buildRunner(scale) {
   const soleMat = new THREE.MeshStandardMaterial({ color: 0x2b2b2b, roughness: 0.8 });
   const shoeAccentMat = new THREE.MeshStandardMaterial({ color: 0x1aa596, roughness: 0.6 });
 
-  // --- pelvis / hips: narrower than the chest, gives a real waistline
+  // ===== hips: pelvis + both legs, rotates for pelvic drive =====
+  const hips = new THREE.Group();
+  hips.position.y = 1.0 * scale;
+  g.add(hips);
+
   const pelvis = new THREE.Mesh(new THREE.SphereGeometry(0.23 * scale, 14, 10), shortsMat);
   pelvis.scale.set(1.12, 0.82, 0.85);
-  pelvis.position.y = 1.0 * scale;
-  g.add(pelvis);
+  hips.add(pelvis);
 
-  // --- torso: ribcage tapering into the waist, plus a slight forward lean
+  const legL = new THREE.Group(); legL.position.set(-0.115 * scale, -0.03 * scale, 0);
+  const legR = new THREE.Group(); legR.position.set(0.115 * scale, -0.03 * scale, 0);
+  const knees = [];
+  [legL, legR].forEach(hip => {
+    const quad = new THREE.Mesh(new THREE.CapsuleGeometry(0.098 * scale, 0.21 * scale, 6, 10), shortsMat);
+    quad.position.y = -0.15 * scale;
+    hip.add(quad);
+    const thighSkin = new THREE.Mesh(new THREE.CapsuleGeometry(0.082 * scale, 0.1 * scale, 6, 10), skinMat);
+    thighSkin.position.y = -0.33 * scale;
+    hip.add(thighSkin);
+
+    // knee joint - everything below flexes here
+    const knee = new THREE.Group();
+    knee.position.y = -0.42 * scale;
+    hip.add(knee);
+    knees.push(knee);
+
+    const kneeCap = new THREE.Mesh(new THREE.SphereGeometry(0.076 * scale, 10, 8), skinMat);
+    knee.add(kneeCap);
+    const calf = new THREE.Mesh(new THREE.CapsuleGeometry(0.072 * scale, 0.2 * scale, 6, 10), skinMat);
+    calf.scale.set(1, 1, 1.15);
+    calf.position.set(0, -0.14 * scale, -0.012 * scale);
+    knee.add(calf);
+    const ankle = new THREE.Mesh(new THREE.SphereGeometry(0.052 * scale, 8, 8), skinMat);
+    ankle.position.y = -0.28 * scale;
+    knee.add(ankle);
+    const shoe = new THREE.Mesh(new THREE.BoxGeometry(0.125 * scale, 0.085 * scale, 0.2 * scale), shoeMat);
+    shoe.position.set(0, -0.335 * scale, 0.035 * scale);
+    knee.add(shoe);
+    const toe = new THREE.Mesh(new THREE.SphereGeometry(0.066 * scale, 10, 8), shoeMat);
+    toe.scale.set(0.95, 0.62, 1.0);
+    toe.position.set(0, -0.335 * scale, 0.13 * scale);
+    knee.add(toe);
+    const sole = new THREE.Mesh(new THREE.BoxGeometry(0.135 * scale, 0.032 * scale, 0.29 * scale), soleMat);
+    sole.position.set(0, -0.375 * scale, 0.05 * scale);
+    knee.add(sole);
+    const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.14 * scale, 0.03 * scale, 0.07 * scale), shoeAccentMat);
+    stripe.position.set(0, -0.315 * scale, 0.075 * scale);
+    knee.add(stripe);
+
+    hips.add(hip);
+  });
+
+  // ===== torso: pivots at the hips so leaning bends the spine, not the feet =====
+  const torso = new THREE.Group();
+  torso.position.y = 1.05 * scale;
+  g.add(torso);
+
   const waist = new THREE.Mesh(new THREE.CylinderGeometry(0.235 * scale, 0.225 * scale, 0.3 * scale, 14), shirtMat);
-  waist.position.y = 1.24 * scale;
-  g.add(waist);
+  waist.position.y = 0.19 * scale;
+  torso.add(waist);
   const ribcage = new THREE.Mesh(new THREE.SphereGeometry(0.3 * scale, 16, 12), shirtMat);
   ribcage.scale.set(1.08, 1.15, 0.78);
-  ribcage.position.set(0, 1.56 * scale, 0.01 * scale);
-  g.add(ribcage);
-  // deltoid caps so the shoulders read as anatomy, not a box corner
+  ribcage.position.set(0, 0.51 * scale, 0.01 * scale);
+  torso.add(ribcage);
   [-1, 1].forEach(s => {
     const delt = new THREE.Mesh(new THREE.SphereGeometry(0.135 * scale, 12, 10), shirtMat);
     delt.scale.set(1, 0.9, 0.9);
-    delt.position.set(s * 0.29 * scale, 1.72 * scale, 0);
-    g.add(delt);
+    delt.position.set(s * 0.29 * scale, 0.67 * scale, 0);
+    torso.add(delt);
   });
   const collar = new THREE.Mesh(new THREE.TorusGeometry(0.15 * scale, 0.042 * scale, 8, 16), shirtTrimMat);
-  collar.position.set(0, 1.85 * scale, 0);
+  collar.position.y = 0.8 * scale;
   collar.rotation.x = Math.PI / 2;
-  g.add(collar);
+  torso.add(collar);
   const hem = new THREE.Mesh(new THREE.TorusGeometry(0.235 * scale, 0.035 * scale, 8, 16), shirtTrimMat);
-  hem.position.set(0, 1.1 * scale, 0);
+  hem.position.y = 0.05 * scale;
   hem.rotation.x = Math.PI / 2;
-  g.add(hem);
-
-  // --- neck with trapezius slope
+  torso.add(hem);
   const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.088 * scale, 0.105 * scale, 0.17 * scale, 12), skinMat);
-  neck.position.y = 1.93 * scale;
-  g.add(neck);
+  neck.position.y = 0.88 * scale;
+  torso.add(neck);
   const traps = new THREE.Mesh(new THREE.SphereGeometry(0.19 * scale, 12, 8), shirtMat);
   traps.scale.set(1.3, 0.42, 0.8);
-  traps.position.set(0, 1.8 * scale, -0.02 * scale);
-  g.add(traps);
+  traps.position.set(0, 0.75 * scale, -0.02 * scale);
+  torso.add(traps);
 
-  // --- head: egg-shaped cranium, tapered jaw, cheekbones, chin
+  // ===== head: own pivot at the neck so it can steady itself while running =====
+  const head = new THREE.Group();
+  head.position.y = 0.97 * scale;
+  torso.add(head);
+
   const skull = new THREE.Mesh(new THREE.SphereGeometry(0.235 * scale, 20, 18), skinMat);
   skull.scale.set(0.94, 1.06, 1.0);
-  skull.position.y = 2.19 * scale;
-  g.add(skull);
+  skull.position.y = 0.17 * scale;
+  head.add(skull);
   const jaw = new THREE.Mesh(new THREE.SphereGeometry(0.185 * scale, 14, 12), skinMat);
   jaw.scale.set(0.92, 0.78, 0.95);
-  jaw.position.set(0, 2.06 * scale, 0.025 * scale);
-  g.add(jaw);
+  jaw.position.set(0, 0.04 * scale, 0.025 * scale);
+  head.add(jaw);
   const chin = new THREE.Mesh(new THREE.SphereGeometry(0.075 * scale, 10, 8), skinMat);
   chin.scale.set(1.1, 0.85, 0.9);
-  chin.position.set(0, 1.97 * scale, 0.15 * scale);
-  g.add(chin);
+  chin.position.set(0, -0.05 * scale, 0.15 * scale);
+  head.add(chin);
   [-1, 1].forEach(s => {
     const cheek = new THREE.Mesh(new THREE.SphereGeometry(0.072 * scale, 10, 8), skinMat);
     cheek.scale.set(0.9, 0.8, 0.7);
-    cheek.position.set(s * 0.135 * scale, 2.14 * scale, 0.15 * scale);
-    g.add(cheek);
+    cheek.position.set(s * 0.135 * scale, 0.12 * scale, 0.15 * scale);
+    head.add(cheek);
   });
   [-1, 1].forEach(s => {
     const ear = new THREE.Mesh(new THREE.SphereGeometry(0.052 * scale, 10, 8), skinShadeMat);
     ear.scale.set(0.45, 1.05, 0.85);
-    ear.position.set(s * 0.222 * scale, 2.17 * scale, -0.005 * scale);
-    g.add(ear);
+    ear.position.set(s * 0.222 * scale, 0.15 * scale, -0.005 * scale);
+    head.add(ear);
   });
-
-  // --- face: brow ridge, nose bridge + tip, eyes set into sockets, smile
   const brow = new THREE.Mesh(new THREE.BoxGeometry(0.235 * scale, 0.035 * scale, 0.055 * scale), hairMat);
-  brow.position.set(0, 2.265 * scale, 0.195 * scale);
-  g.add(brow);
+  brow.position.set(0, 0.245 * scale, 0.195 * scale);
+  head.add(brow);
   const noseBridge = new THREE.Mesh(new THREE.BoxGeometry(0.045 * scale, 0.12 * scale, 0.05 * scale), skinMat);
-  noseBridge.position.set(0, 2.19 * scale, 0.215 * scale);
-  g.add(noseBridge);
+  noseBridge.position.set(0, 0.17 * scale, 0.215 * scale);
+  head.add(noseBridge);
   const noseTip = new THREE.Mesh(new THREE.SphereGeometry(0.042 * scale, 10, 8), skinMat);
-  noseTip.position.set(0, 2.135 * scale, 0.235 * scale);
-  g.add(noseTip);
+  noseTip.position.set(0, 0.115 * scale, 0.235 * scale);
+  head.add(noseTip);
   [-1, 1].forEach(s => {
     const eyeWhite = new THREE.Mesh(new THREE.SphereGeometry(0.052 * scale, 12, 10), new THREE.MeshStandardMaterial({ color: 0xf8f8f8, roughness: 0.35 }));
     eyeWhite.scale.set(1, 0.82, 0.6);
-    eyeWhite.position.set(s * 0.093 * scale, 2.215 * scale, 0.192 * scale);
-    g.add(eyeWhite);
+    eyeWhite.position.set(s * 0.093 * scale, 0.195 * scale, 0.192 * scale);
+    head.add(eyeWhite);
     const iris = new THREE.Mesh(new THREE.SphereGeometry(0.026 * scale, 10, 8), new THREE.MeshStandardMaterial({ color: 0x4a2c14, roughness: 0.3 }));
-    iris.position.set(s * 0.093 * scale, 2.212 * scale, 0.222 * scale);
-    g.add(iris);
+    iris.position.set(s * 0.093 * scale, 0.192 * scale, 0.222 * scale);
+    head.add(iris);
     const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.012 * scale, 8, 6), new THREE.MeshStandardMaterial({ color: 0x140c06 }));
-    pupil.position.set(s * 0.093 * scale, 2.212 * scale, 0.238 * scale);
-    g.add(pupil);
+    pupil.position.set(s * 0.093 * scale, 0.192 * scale, 0.238 * scale);
+    head.add(pupil);
   });
   const mouth = new THREE.Mesh(new THREE.TorusGeometry(0.062 * scale, 0.019 * scale, 8, 14, Math.PI * 0.9), new THREE.MeshStandardMaterial({ color: 0x8a3a34, roughness: 0.5 }));
-  mouth.position.set(0, 2.05 * scale, 0.185 * scale);
+  mouth.position.set(0, 0.03 * scale, 0.185 * scale);
   mouth.rotation.z = Math.PI;
-  g.add(mouth);
-
-  // --- hair: swept cap with a few soft locks (no spikes)
+  head.add(mouth);
   const hairCap = new THREE.Mesh(new THREE.SphereGeometry(0.245 * scale, 18, 14, 0, Math.PI * 2, 0, Math.PI / 2.05), hairMat);
   hairCap.scale.set(0.97, 1.0, 1.02);
-  hairCap.position.set(0, 2.2 * scale, -0.008 * scale);
-  g.add(hairCap);
+  hairCap.position.set(0, 0.18 * scale, -0.008 * scale);
+  head.add(hairCap);
   const fringe = new THREE.Mesh(new THREE.SphereGeometry(0.2 * scale, 14, 10, 0, Math.PI, 0, Math.PI / 2.4), hairMat);
   fringe.scale.set(1.12, 0.6, 1.0);
-  fringe.position.set(0, 2.305 * scale, 0.055 * scale);
+  fringe.position.set(0, 0.285 * scale, 0.055 * scale);
   fringe.rotation.y = -Math.PI / 2;
-  g.add(fringe);
+  head.add(fringe);
   for (let i = 0; i < 5; i++) {
     const t = (i / 4) - 0.5;
     const lock = new THREE.Mesh(new THREE.SphereGeometry(0.062 * scale, 8, 6), hairMat);
     lock.scale.set(0.85, 0.55, 0.85);
-    lock.position.set(t * 0.3 * scale, (2.36 - Math.abs(t) * 0.12) * scale, 0.02 * scale);
-    g.add(lock);
+    lock.position.set(t * 0.3 * scale, (0.34 - Math.abs(t) * 0.12) * scale, 0.02 * scale);
+    head.add(lock);
   }
 
-  // --- arms: shoulder -> bicep -> elbow -> forearm -> wrist -> hand + thumb
-  const armL = new THREE.Group(); armL.position.set(-0.295 * scale, 1.72 * scale, 0);
-  const armR = new THREE.Group(); armR.position.set(0.295 * scale, 1.72 * scale, 0);
-  [[armL, -1], [armR, 1]].forEach(([pivot, side]) => {
+  // ===== arms: shoulder pivot -> bicep -> elbow joint -> forearm/hand =====
+  const armL = new THREE.Group(); armL.position.set(-0.295 * scale, 0.67 * scale, 0);
+  const armR = new THREE.Group(); armR.position.set(0.295 * scale, 0.67 * scale, 0);
+  const elbows = [];
+  [[armL, -1], [armR, 1]].forEach(([shoulder, side]) => {
     const bicep = new THREE.Mesh(new THREE.CapsuleGeometry(0.072 * scale, 0.2 * scale, 6, 10), skinMat);
     bicep.position.y = -0.16 * scale;
-    pivot.add(bicep);
+    shoulder.add(bicep);
     const sleeve = new THREE.Mesh(new THREE.CylinderGeometry(0.088 * scale, 0.082 * scale, 0.14 * scale, 12), shirtMat);
     sleeve.position.y = -0.07 * scale;
-    pivot.add(sleeve);
-    const elbow = new THREE.Mesh(new THREE.SphereGeometry(0.062 * scale, 10, 8), skinMat);
+    shoulder.add(sleeve);
+
+    const elbow = new THREE.Group();
     elbow.position.y = -0.29 * scale;
-    pivot.add(elbow);
+    shoulder.add(elbow);
+    elbows.push(elbow);
+
+    const elbowCap = new THREE.Mesh(new THREE.SphereGeometry(0.062 * scale, 10, 8), skinMat);
+    elbow.add(elbowCap);
     const forearm = new THREE.Mesh(new THREE.CapsuleGeometry(0.058 * scale, 0.19 * scale, 6, 10), skinMat);
-    forearm.position.y = -0.42 * scale;
-    pivot.add(forearm);
+    forearm.position.y = -0.13 * scale;
+    elbow.add(forearm);
     const hand = new THREE.Mesh(new THREE.SphereGeometry(0.068 * scale, 10, 8), skinMat);
     hand.scale.set(0.8, 1.05, 0.5);
-    hand.position.y = -0.56 * scale;
-    pivot.add(hand);
+    hand.position.y = -0.27 * scale;
+    elbow.add(hand);
     const thumb = new THREE.Mesh(new THREE.CapsuleGeometry(0.02 * scale, 0.03 * scale, 3, 6), skinMat);
-    thumb.position.set(side * 0.045 * scale, -0.545 * scale, 0.015 * scale);
+    thumb.position.set(side * 0.045 * scale, -0.255 * scale, 0.015 * scale);
     thumb.rotation.z = side * 0.6;
-    pivot.add(thumb);
-    g.add(pivot);
+    elbow.add(thumb);
+
+    torso.add(shoulder);
   });
 
-  // --- legs: hip -> quad -> knee -> calf -> ankle -> shoe with toe box
-  const legL = new THREE.Group(); legL.position.set(-0.115 * scale, 0.97 * scale, 0);
-  const legR = new THREE.Group(); legR.position.set(0.115 * scale, 0.97 * scale, 0);
-  [legL, legR].forEach(pivot => {
-    const quad = new THREE.Mesh(new THREE.CapsuleGeometry(0.098 * scale, 0.21 * scale, 6, 10), shortsMat);
-    quad.position.y = -0.15 * scale;
-    pivot.add(quad);
-    const thighSkin = new THREE.Mesh(new THREE.CapsuleGeometry(0.082 * scale, 0.1 * scale, 6, 10), skinMat);
-    thighSkin.position.y = -0.33 * scale;
-    pivot.add(thighSkin);
-    const knee = new THREE.Mesh(new THREE.SphereGeometry(0.076 * scale, 10, 8), skinMat);
-    knee.position.y = -0.42 * scale;
-    pivot.add(knee);
-    const calf = new THREE.Mesh(new THREE.CapsuleGeometry(0.072 * scale, 0.2 * scale, 6, 10), skinMat);
-    calf.scale.set(1, 1, 1.15);
-    calf.position.set(0, -0.56 * scale, -0.012 * scale);
-    pivot.add(calf);
-    const ankle = new THREE.Mesh(new THREE.SphereGeometry(0.052 * scale, 8, 8), skinMat);
-    ankle.position.y = -0.7 * scale;
-    pivot.add(ankle);
-    const shoe = new THREE.Mesh(new THREE.BoxGeometry(0.125 * scale, 0.085 * scale, 0.2 * scale), shoeMat);
-    shoe.position.set(0, -0.755 * scale, 0.035 * scale);
-    pivot.add(shoe);
-    const toe = new THREE.Mesh(new THREE.SphereGeometry(0.066 * scale, 10, 8), shoeMat);
-    toe.scale.set(0.95, 0.62, 1.0);
-    toe.position.set(0, -0.755 * scale, 0.13 * scale);
-    pivot.add(toe);
-    const sole = new THREE.Mesh(new THREE.BoxGeometry(0.135 * scale, 0.032 * scale, 0.29 * scale), soleMat);
-    sole.position.set(0, -0.795 * scale, 0.05 * scale);
-    pivot.add(sole);
-    const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.14 * scale, 0.03 * scale, 0.07 * scale), shoeAccentMat);
-    stripe.position.set(0, -0.735 * scale, 0.075 * scale);
-    pivot.add(stripe);
-    g.add(pivot);
-  });
-
-  g.userData = { armL, armR, legL, legR };
+  g.userData = {
+    hips, torso, head,
+    legL, legR, kneeL: knees[0], kneeR: knees[1],
+    armL, armR, elbowL: elbows[0], elbowR: elbows[1],
+  };
   castAll(g);
   return g;
 }
 
-const playerMesh = buildRunner(0.95);
+const playerMesh = buildRunner(0.82);
 scene.add(playerMesh);
 
 // ---------- fireball enemies ----------
@@ -1183,25 +1301,64 @@ function update(dt) {
   if (player.health <= 0 && state === 'playing') { endGame(false); return; }
   if (player.z >= FINISH_Z && state === 'playing') { goToNextLevel(); return; }
 
-  // sync meshes
+  // ---------- character animation ----------
+  const rig = playerMesh.userData;
   const moving = player.onGround && !player.sliding;
-  const bob = moving ? Math.abs(Math.sin(player.runCycle)) * 0.09 : 0;
-  playerMesh.position.set(player.x, player.y + bob, player.z);
-  const slideScale = player.sliding ? 0.55 : 1;
-  playerMesh.scale.y += (slideScale - playerMesh.scale.y) * Math.min(1, dt * 14);
-  const tiltTarget = player.sliding ? 0.85 : (!player.onGround ? -0.15 : 0);
-  playerMesh.rotation.x += (tiltTarget - playerMesh.rotation.x) * Math.min(1, dt * 12);
-  const { armL, armR, legL, legR } = playerMesh.userData;
+  const s = player.runCycle;
+
+  // body rises twice per stride (once per foot push-off), not once
+  // squash on the slide so the crouch actually passes under the rock ledges;
+  // the drop is derived from the squash so the feet stay planted mid-transition
+  const targetSquash = player.sliding ? SLIDE_SQUASH : 1;
+  playerMesh.scale.y += (targetSquash - playerMesh.scale.y) * Math.min(1, dt * 16);
+  const squashT = (1 - playerMesh.scale.y) / (1 - SLIDE_SQUASH);
+  const slideDrop = squashT * SLIDE_FOOT_LIFT;
+  const bob = moving ? Math.abs(Math.sin(s)) * 0.075 : 0;
+  playerMesh.position.set(player.x, player.y + bob - slideDrop, player.z);
+  // banking into the lane change reads as weight shift
+  const bankTarget = (player.x - LANES_X[player.laneIndex]) * 0.08;
+  playerMesh.rotation.z += (bankTarget - playerMesh.rotation.z) * Math.min(1, dt * 8);
+  playerMesh.rotation.x += (0 - playerMesh.rotation.x) * Math.min(1, dt * 10);
+
   if (moving) {
-    const swing = Math.sin(player.runCycle) * 0.85;
-    legL.rotation.x = swing; legR.rotation.x = -swing;
-    armL.rotation.x = -swing * 0.75; armR.rotation.x = swing * 0.75;
+    // thigh swing with a small second harmonic so it is not a pure sine
+    const thighL = Math.sin(s) * 0.82 + Math.sin(2 * s) * 0.07;
+    const thighR = Math.sin(s + Math.PI) * 0.82 + Math.sin(2 * s + Math.PI) * 0.07;
+    rig.legL.rotation.x = thighL;
+    rig.legR.rotation.x = thighR;
+    // knee stays near-straight at footstrike and tucks hard through recovery
+    rig.kneeL.rotation.x = -(0.16 + 1.35 * Math.max(0, -Math.sin(s + 0.45)));
+    rig.kneeR.rotation.x = -(0.16 + 1.35 * Math.max(0, -Math.sin(s + Math.PI + 0.45)));
+    // arms drive opposite the same-side leg, elbows held bent like a real runner
+    rig.armL.rotation.x = -Math.sin(s) * 0.62;
+    rig.armR.rotation.x = -Math.sin(s + Math.PI) * 0.62;
+    rig.elbowL.rotation.x = -(0.95 + 0.42 * Math.max(0, Math.sin(s)));
+    rig.elbowR.rotation.x = -(0.95 + 0.42 * Math.max(0, Math.sin(s + Math.PI)));
+    // hips and shoulders twist against each other; head steadies itself
+    rig.hips.rotation.y = Math.sin(s) * 0.15;
+    rig.torso.rotation.y = -Math.sin(s) * 0.19;
+    rig.torso.rotation.x = 0.14;
+    rig.torso.rotation.z = Math.sin(s) * 0.05;
+    rig.head.rotation.y = Math.sin(s) * 0.055;
+    rig.head.rotation.x = -0.11;
   } else if (!player.onGround) {
-    legL.rotation.x = 1.1; legR.rotation.x = 0.75;
-    armL.rotation.x = -0.6; armR.rotation.x = -0.9;
+    // airborne: front knee tucked up, back leg trailing, arms lifted
+    rig.legL.rotation.x = 0.95; rig.kneeL.rotation.x = -1.5;
+    rig.legR.rotation.x = -0.35; rig.kneeR.rotation.x = -0.55;
+    rig.armL.rotation.x = -1.5; rig.elbowL.rotation.x = -0.75;
+    rig.armR.rotation.x = -1.15; rig.elbowR.rotation.x = -1.0;
+    rig.hips.rotation.y = 0;
+    rig.torso.rotation.set(0.05, 0, 0);
+    rig.head.rotation.set(-0.08, 0, 0);
   } else {
-    legL.rotation.x = 0.3; legR.rotation.x = 0.5;
-    armL.rotation.x = -0.4; armR.rotation.x = -0.2;
+    // sliding: deep crouch with the head tucked low, knees folded under
+    rig.legL.rotation.x = 0.85; rig.kneeL.rotation.x = -1.75;
+    rig.legR.rotation.x = 0.55; rig.kneeR.rotation.x = -1.85;
+    rig.armL.rotation.x = 0.85; rig.elbowL.rotation.x = -0.35;
+    rig.armR.rotation.x = 0.7; rig.elbowR.rotation.x = -0.45;
+    rig.hips.rotation.y = 0;
+    rig.torso.rotation.set(0.85, 0, 0);
+    rig.head.rotation.set(-0.55, 0, 0);
   }
   // torch flicker: jitter brightness and flame scale so the corridor feels lit by fire
   const tNow = performance.now() * 0.006;
@@ -1216,7 +1373,7 @@ function update(dt) {
   camera.position.x += (camTargetX - camera.position.x) * Math.min(1, dt * 5);
   camera.position.y = player.y + CAMERA_HEIGHT;
   camera.position.z = player.z - CAMERA_DISTANCE;
-  camera.lookAt(player.x, player.y + 0.92, player.z + 8);
+  camera.lookAt(player.x, player.y + 0.85, player.z + 12);
   camera.rotateZ((camTargetX - camera.position.x) * -0.015);
 
   // sun follows player for tight shadow frustum
@@ -1259,5 +1416,5 @@ buildLevel(1);
 renderPlayerHealth();
 updateHud();
 camera.position.set(0, CAMERA_HEIGHT, -CAMERA_DISTANCE);
-camera.lookAt(0, 0.92, 8);
+camera.lookAt(0, 0.85, 12);
 requestAnimationFrame(tick);
