@@ -1,4 +1,4 @@
-// ---------- Lost Temple Dash: 3D chase-cam lane runner (Three.js) ----------
+// ---------- Captain Go: 3D chase-cam lane runner (Three.js) ----------
 const canvas = document.getElementById('game');
 const scoreEl = document.getElementById('score-val');
 const playerHealthFillEl = document.getElementById('player-health-fill');
