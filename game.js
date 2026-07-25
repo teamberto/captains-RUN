@@ -37,7 +37,7 @@ const RING_PER_CHARGE = 10;
 const MAX_POWER_CHARGES = 3;
 const PLAYER_MAX_HEALTH = 20;
 const HEART_HEAL_AMOUNT = 5;
-const CAMERA_HEIGHT = 3.4;
+const CAMERA_HEIGHT = 3.0;
 const CAMERA_DISTANCE = 7.6;
 
 // ---------- sound (synthesized, no external assets) ----------
@@ -88,13 +88,14 @@ const sfx = {
 
 // ---------- level theme data ----------
 const LEVEL_DATA = [
-  { // Level 1: Green Hills
+  { // Level 1: Jungle Ruins
     theme: {
-      name: 'Green Hills', skyTop: 0x2e8fe0, skyBottom: 0xdff3ff, fog: 0xbfe8ff,
-      groundTint: 0xffffff, plankTint: 0xffffff, rock: 0x8a7a68,
-      hemiSky: 0xbfe3ff, hemiGround: 0x4c7a35, sunColor: 0xfff2d8,
-      leafColor: 0x3f8f4f, trunkColor: 0x7a5230,
-      bossType: 0, bossName: 'Big Sam',
+      name: 'Jungle Ruins', skyTop: 0x1f6b4a, skyBottom: 0xcfe8b0, fog: 0xbfe0a0,
+      groundTint: 0x8a9a4a, plankTint: 0xc9b27a, rock: 0x6f7a5a,
+      hemiSky: 0xbfe0a0, hemiGround: 0x3a5a2a, sunColor: 0xfff2c0,
+      leafColor: 0x2f7a3f, trunkColor: 0x4a3420,
+      sceneryType: 'jungle',
+      bossType: 0, bossName: 'Vine King',
     },
     crates: [{ z: 30, lane: 1 }, { z: 80, lane: 2 }, { z: 155, lane: 1 }],
     bars: [{ z: 65, lane: 1 }, { z: 170, lane: 0 }],
@@ -103,13 +104,14 @@ const LEVEL_DATA = [
     rings: [[15, 1], [18, 1], [21, 1], [42, 0], [45, 0], [48, 0], [95, 2], [98, 2], [101, 2], [140, 1], [143, 1], [146, 1], [190, 2], [193, 2], [196, 2]],
     hearts: [[10, 2], [225, 1]],
   },
-  { // Level 2: Egg Canyon
+  { // Level 2: Jungle Falls
     theme: {
-      name: 'Egg Canyon', skyTop: 0xe0862e, skyBottom: 0xffe9c2, fog: 0xffd9a0,
-      groundTint: 0xe0b070, plankTint: 0xffd9a8, rock: 0x9c5a34,
-      hemiSky: 0xffd9a0, hemiGround: 0x8a5a2a, sunColor: 0xffe0b0,
-      leafColor: 0xb5822f, trunkColor: 0x6b4020,
-      bossType: 1, bossName: 'Chef Rocco',
+      name: 'Jungle Falls', skyTop: 0x35607a, skyBottom: 0xdff0f0, fog: 0xc8e8e8,
+      groundTint: 0x6a8a7a, plankTint: 0x8a9a8a, rock: 0x5a6a6a,
+      hemiSky: 0xd8f0f0, hemiGround: 0x2a4a3a, sunColor: 0xeaf7ff,
+      leafColor: 0x2a6a5a, trunkColor: 0x3a2a1a,
+      sceneryType: 'jungle', waterfall: true,
+      bossType: 1, bossName: 'Croc Wrangler',
     },
     crates: [{ z: 35, lane: 0 }, { z: 90, lane: 1 }, { z: 160, lane: 2 }],
     bars: [{ z: 60, lane: 2 }, { z: 150, lane: 1 }],
@@ -118,13 +120,14 @@ const LEVEL_DATA = [
     rings: [[20, 2], [23, 2], [26, 2], [45, 1], [48, 1], [51, 1], [110, 0], [113, 0], [116, 0], [145, 2], [148, 2], [151, 2], [185, 1], [188, 1], [191, 1]],
     hearts: [[10, 0], [230, 2]],
   },
-  { // Level 3: Frost Peaks
+  { // Level 3: Moon Base
     theme: {
-      name: 'Frost Peaks', skyTop: 0x23406b, skyBottom: 0xcfe8ff, fog: 0xdbeeff,
-      groundTint: 0xe8f0f5, plankTint: 0xcfe0e8, rock: 0x6d7d8a,
-      hemiSky: 0xdbeeff, hemiGround: 0x8a9aa8, sunColor: 0xd8ecff,
-      leafColor: 0xdfeef5, trunkColor: 0x556570,
-      bossType: 2, bossName: 'Coach Blizz',
+      name: 'Moon Base', skyTop: 0x05050f, skyBottom: 0x1a1a35, fog: 0x0a0a1a,
+      groundTint: 0x9a9aa0, plankTint: 0x7a7a85, rock: 0x555560,
+      hemiSky: 0x2a2a4a, hemiGround: 0x1a1a20, sunColor: 0xdfe8ff,
+      leafColor: 0x555560, trunkColor: 0x3a3a42,
+      sceneryType: 'space', starry: true, planetColor: 0x3a6ab0,
+      bossType: 2, bossName: 'Cosmo',
     },
     crates: [{ z: 40, lane: 2 }, { z: 95, lane: 0 }, { z: 165, lane: 1 }],
     bars: [{ z: 70, lane: 0 }, { z: 155, lane: 2 }],
@@ -133,13 +136,14 @@ const LEVEL_DATA = [
     rings: [[25, 0], [28, 0], [31, 0], [80, 1], [83, 1], [86, 1], [120, 2], [123, 2], [126, 2], [150, 0], [153, 0], [156, 0], [200, 1], [203, 1], [206, 1]],
     hearts: [[12, 1], [232, 2]],
   },
-  { // Level 4: Night City
+  { // Level 4: Deep Space Station
     theme: {
-      name: 'Night City', skyTop: 0x0b1030, skyBottom: 0x33306a, fog: 0x201f45,
-      groundTint: 0x3a3a48, plankTint: 0x55506a, rock: 0x1c1c22,
-      hemiSky: 0x3a3a7a, hemiGround: 0x14141c, sunColor: 0x9fb0ff,
-      leafColor: 0x2a2a55, trunkColor: 0x1a1a22,
-      bossType: 3, bossName: 'DJ Nova',
+      name: 'Deep Space Station', skyTop: 0x150a2a, skyBottom: 0x3a1a55, fog: 0x2a1040,
+      groundTint: 0x4a4a5a, plankTint: 0x5a5a70, rock: 0x35354a,
+      hemiSky: 0x4a2a6a, hemiGround: 0x150a2a, sunColor: 0xff9fe0,
+      leafColor: 0x35354a, trunkColor: 0x25253a,
+      sceneryType: 'space', starry: true, planetColor: 0xd0708a, ringColor: 0xe8c088,
+      bossType: 3, bossName: 'Nebula Nova',
     },
     crates: [{ z: 32, lane: 1 }, { z: 85, lane: 2 }, { z: 150, lane: 0 }],
     bars: [{ z: 58, lane: 2 }, { z: 165, lane: 1 }],
@@ -242,6 +246,7 @@ function makeSkyTexture(topHex, bottomHex) {
   return tex;
 }
 
+let cloudMeshes = [];
 function makeCloud(x, y, z) {
   const g = new THREE.Group();
   const mat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1, emissive: 0x333333 });
@@ -253,11 +258,38 @@ function makeCloud(x, y, z) {
   }
   g.position.set(x, y, z);
   scene.add(g);
+  cloudMeshes.push(g);
 }
 for (let z = 0; z < ROAD_LEN; z += 26) {
   makeCloud(-16 + Math.random() * 8, 16 + Math.random() * 6, z);
   makeCloud(16 - Math.random() * 8, 14 + Math.random() * 8, z + 12);
 }
+
+// ---------- starfield (shown for space-themed levels) ----------
+function makeStarTexture() {
+  const c = document.createElement('canvas');
+  c.width = 32; c.height = 32;
+  const ctx = c.getContext('2d');
+  const grad = ctx.createRadialGradient(16, 16, 0, 16, 16, 16);
+  grad.addColorStop(0, 'rgba(255,255,255,1)');
+  grad.addColorStop(0.4, 'rgba(255,255,255,0.8)');
+  grad.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, 32, 32);
+  return new THREE.CanvasTexture(c);
+}
+const STAR_COUNT = 500;
+const starPositions = new Float32Array(STAR_COUNT * 3);
+for (let i = 0; i < STAR_COUNT; i++) {
+  starPositions[i * 3] = (Math.random() - 0.5) * 260;
+  starPositions[i * 3 + 1] = 8 + Math.random() * 90;
+  starPositions[i * 3 + 2] = Math.random() * (ROAD_LEN + 60) - 20;
+}
+const starGeo = new THREE.BufferGeometry();
+starGeo.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+const starField = new THREE.Points(starGeo, new THREE.PointsMaterial({ size: 1.6, map: makeStarTexture(), transparent: true, depthWrite: false, sizeAttenuation: true, color: 0xffffff }));
+starField.visible = false;
+scene.add(starField);
 
 // ---------- lighting ----------
 const hemiLight = new THREE.HemisphereLight(0xbfe3ff, 0x4c7a35, 0.7);
@@ -283,6 +315,8 @@ function applyTheme(theme) {
   hemiLight.color.set(theme.hemiSky);
   hemiLight.groundColor.set(theme.hemiGround);
   sun.color.set(theme.sunColor);
+  cloudMeshes.forEach(c => { c.visible = !theme.starry; });
+  starField.visible = !!theme.starry;
 }
 
 function resize() {
@@ -337,9 +371,64 @@ function makeGrassTexture() {
   return tex;
 }
 
+function makeMoonDustTexture() {
+  const c = document.createElement('canvas');
+  c.width = 256; c.height = 256;
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = '#8a8a92';
+  ctx.fillRect(0, 0, 256, 256);
+  for (let i = 0; i < 2200; i++) {
+    const x = Math.random() * 256, y = Math.random() * 256;
+    ctx.fillStyle = Math.random() > 0.5 ? 'rgba(120,120,128,0.5)' : 'rgba(60,60,68,0.5)';
+    ctx.fillRect(x, y, 2, 5);
+  }
+  for (let i = 0; i < 14; i++) {
+    const x = Math.random() * 256, y = Math.random() * 256, r = 6 + Math.random() * 14;
+    ctx.beginPath();
+    ctx.fillStyle = 'rgba(50,50,58,0.4)';
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  const tex = new THREE.CanvasTexture(c);
+  tex.wrapS = THREE.RepeatWrapping; tex.wrapT = THREE.RepeatWrapping;
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+
+function makeMetalTexture() {
+  const c = document.createElement('canvas');
+  c.width = 256; c.height = 256;
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = '#8a8a95';
+  ctx.fillRect(0, 0, 256, 256);
+  const panelH = 42;
+  for (let y = 0; y < 256; y += panelH) {
+    ctx.fillStyle = `rgb(${140 + Math.random() * 16 - 8},${140 + Math.random() * 16 - 8},${150 + Math.random() * 16 - 8})`;
+    ctx.fillRect(0, y, 256, panelH - 3);
+    ctx.strokeStyle = 'rgba(30,30,38,0.6)';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(0, y, 256, panelH - 3);
+    for (let i = 0; i < 5; i++) {
+      const rx = 20 + i * 50;
+      ctx.beginPath();
+      ctx.fillStyle = 'rgba(210,210,220,0.5)';
+      ctx.arc(rx, y + panelH / 2 - 2, 3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  const tex = new THREE.CanvasTexture(c);
+  tex.wrapS = THREE.RepeatWrapping; tex.wrapT = THREE.RepeatWrapping;
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+
 const woodTex = makeWoodTexture();
 woodTex.repeat.set(1, 8);
 const grassTex = makeGrassTexture();
+const moonTex = makeMoonDustTexture();
+moonTex.repeat.set(4, ROAD_LEN / 6);
+const metalTex = makeMetalTexture();
+metalTex.repeat.set(1, 8);
 grassTex.repeat.set(4, ROAD_LEN / 6);
 
 // ---------- disposal helpers ----------
@@ -357,46 +446,104 @@ function clearList(list) {
   return [];
 }
 
-// ---------- world (road/grass/trees/volcanoes) rebuilt per level ----------
+// ---------- world (road/grass/scenery/backdrop) rebuilt per level ----------
 let roadMeshes = [];
 let grassMeshes = [];
 let treeMeshes = [];
-let volcanoMeshes = [];
+let bgPropMeshes = [];
 
-function makeTree(x, z, theme) {
+function makeJungleTree(x, z, theme) {
   const g = new THREE.Group();
-  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.22, 1.4, 8), new THREE.MeshStandardMaterial({ color: theme.trunkColor, roughness: 0.9 }));
-  trunk.position.y = 0.7;
+  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.3, 2.1, 8), new THREE.MeshStandardMaterial({ color: theme.trunkColor, roughness: 0.9 }));
+  trunk.position.y = 1.05;
   trunk.castShadow = true;
-  const leaves = new THREE.Mesh(new THREE.SphereGeometry(1.1, 8, 8), new THREE.MeshStandardMaterial({ color: theme.leafColor, roughness: 0.85 }));
-  leaves.position.y = 1.9;
-  leaves.castShadow = true;
-  g.add(trunk, leaves);
+  g.add(trunk);
+  const leafMat = new THREE.MeshStandardMaterial({ color: theme.leafColor, roughness: 0.85 });
+  [[0, 2.55, 1.4], [0.55, 2.85, 1.05], [-0.55, 3.0, 0.9]].forEach(([lx, ly, lr]) => {
+    const leaves = new THREE.Mesh(new THREE.SphereGeometry(lr, 8, 8), leafMat);
+    leaves.position.set(lx, ly, 0);
+    leaves.scale.y = 0.75;
+    leaves.castShadow = true;
+    g.add(leaves);
+  });
+  const vine = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 1.2, 5), new THREE.MeshStandardMaterial({ color: 0x3f7a3f, roughness: 0.8 }));
+  vine.position.set(0.5, 1.9, 0.5);
+  vine.rotation.z = 0.15;
+  g.add(vine);
   g.position.set(x, 0, z);
   return g;
 }
 
-// distant background volcano: cone body, glowing crater, drifting smoke
-function makeVolcano(x, z, scale) {
+function makeSpaceProp(x, z, theme) {
   const g = new THREE.Group();
-  const rockMat = new THREE.MeshStandardMaterial({ color: 0x5a4436, roughness: 0.95 });
-  const rockDarkMat = new THREE.MeshStandardMaterial({ color: 0x3a2c22, roughness: 0.95 });
-  const lavaMat = new THREE.MeshStandardMaterial({ color: 0xff5a1a, emissive: 0xff3300, emissiveIntensity: 2.2, roughness: 0.4 });
-  const smokeMat = new THREE.MeshStandardMaterial({ color: 0x6a6a6a, roughness: 1, transparent: true, opacity: 0.5 });
+  const rockMat = new THREE.MeshStandardMaterial({ color: theme.rock, roughness: 1 });
+  const rock = new THREE.Mesh(new THREE.IcosahedronGeometry(0.5 + Math.random() * 0.3, 0), rockMat);
+  rock.position.y = 0.35;
+  rock.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, 0);
+  rock.castShadow = true;
+  g.add(rock);
+  const craterRing = new THREE.Mesh(new THREE.TorusGeometry(0.9, 0.12, 6, 16), rockMat);
+  craterRing.rotation.x = Math.PI / 2;
+  craterRing.position.y = 0.02;
+  craterRing.scale.set(1, 1, 0.6);
+  g.add(craterRing);
+  if (Math.random() < 0.3) {
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 1.1, 6), new THREE.MeshStandardMaterial({ color: 0xcccccc, metalness: 0.6, roughness: 0.4 }));
+    pole.position.y = 0.9;
+    g.add(pole);
+    const dish = new THREE.Mesh(new THREE.SphereGeometry(0.32, 10, 10, 0, Math.PI * 2, 0, Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0xeeeeee, metalness: 0.4, roughness: 0.5, side: THREE.DoubleSide }));
+    dish.rotation.x = Math.PI * 0.15;
+    dish.position.set(0, 1.5, 0.1);
+    g.add(dish);
+  }
+  g.position.set(x, 0, z);
+  return g;
+}
 
-  const cone = new THREE.Mesh(new THREE.CylinderGeometry(1.6 * scale, 6 * scale, 9 * scale, 9), rockMat);
-  cone.position.y = 4.5 * scale;
-  g.add(cone);
-  const crater = new THREE.Mesh(new THREE.CylinderGeometry(1.3 * scale, 1.7 * scale, 0.9 * scale, 9), rockDarkMat);
-  crater.position.y = 8.85 * scale;
-  g.add(crater);
-  const lava = new THREE.Mesh(new THREE.CylinderGeometry(1.0 * scale, 1.0 * scale, 0.12 * scale, 12), lavaMat);
-  lava.position.y = 9.2 * scale;
-  g.add(lava);
+// distant background: hazy mountain ridge, with an optional waterfall streak
+function makeJungleBackdrop(x, z, scale, withWaterfall) {
+  const g = new THREE.Group();
+  const mtnMat = new THREE.MeshStandardMaterial({ color: 0x3a5a42, roughness: 1 });
+  const mtnFarMat = new THREE.MeshStandardMaterial({ color: 0x5a7a62, roughness: 1 });
+  const peak = new THREE.Mesh(new THREE.ConeGeometry(5 * scale, 10 * scale, 6), mtnMat);
+  peak.position.y = 5 * scale;
+  g.add(peak);
+  const peak2 = new THREE.Mesh(new THREE.ConeGeometry(3.4 * scale, 7 * scale, 6), mtnFarMat);
+  peak2.position.set(3.2 * scale, 3.5 * scale, -1.5 * scale);
+  g.add(peak2);
+  const mist = new THREE.Mesh(new THREE.SphereGeometry(3 * scale, 8, 8), new THREE.MeshStandardMaterial({ color: 0xdfefe0, transparent: true, opacity: 0.35, roughness: 1 }));
+  mist.position.y = 1.2 * scale;
+  mist.scale.set(1.6, 0.5, 1);
+  g.add(mist);
+  if (withWaterfall) {
+    const falls = new THREE.Mesh(new THREE.PlaneGeometry(0.9 * scale, 6 * scale), new THREE.MeshStandardMaterial({ color: 0xbfe8f0, emissive: 0x9fd8e8, emissiveIntensity: 0.4, transparent: true, opacity: 0.75, roughness: 0.3 }));
+    falls.position.set(-0.8 * scale, 3.2 * scale, 4.6 * scale);
+    g.add(falls);
+    const pool = new THREE.Mesh(new THREE.CylinderGeometry(1.1 * scale, 1.1 * scale, 0.1 * scale, 12), new THREE.MeshStandardMaterial({ color: 0xbfe8f0, roughness: 0.3 }));
+    pool.position.set(-0.8 * scale, 0.2 * scale, 4.6 * scale);
+    g.add(pool);
+  }
+  g.position.set(x, 0, z);
+  return g;
+}
+
+// distant background: planet (optional ring) with a small drifting asteroid cluster
+function makeSpaceBackdrop(x, z, scale, planetColor, ringColor) {
+  const g = new THREE.Group();
+  const planetMat = new THREE.MeshStandardMaterial({ color: planetColor, roughness: 0.7, emissive: planetColor, emissiveIntensity: 0.12 });
+  const planet = new THREE.Mesh(new THREE.SphereGeometry(4.5 * scale, 20, 20), planetMat);
+  planet.position.y = 14 * scale;
+  g.add(planet);
+  if (ringColor) {
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(6.5 * scale, 0.45 * scale, 8, 32), new THREE.MeshStandardMaterial({ color: ringColor, roughness: 0.5, side: THREE.DoubleSide }));
+    ring.position.y = 14 * scale;
+    ring.rotation.x = Math.PI / 2.4;
+    g.add(ring);
+  }
   for (let i = 0; i < 3; i++) {
-    const puff = new THREE.Mesh(new THREE.SphereGeometry((1.1 + i * 0.5) * scale, 8, 8), smokeMat);
-    puff.position.set(0.4 * i * scale, (9.7 + i * 1.7) * scale, 0.2 * i * scale);
-    g.add(puff);
+    const ast = new THREE.Mesh(new THREE.IcosahedronGeometry(0.4 + Math.random() * 0.3, 0), new THREE.MeshStandardMaterial({ color: 0x555560, roughness: 1 }));
+    ast.position.set((Math.random() - 0.5) * 4 * scale, (7 + Math.random() * 4) * scale, (Math.random() - 0.5) * 3 * scale);
+    g.add(ast);
   }
   g.position.set(x, 0, z);
   return g;
@@ -406,7 +553,8 @@ function buildRoadForLevel(levelGaps, theme) {
   roadMeshes = clearList(roadMeshes);
   grassMeshes = clearList(grassMeshes);
   treeMeshes = clearList(treeMeshes);
-  volcanoMeshes = clearList(volcanoMeshes);
+  bgPropMeshes = clearList(bgPropMeshes);
+  const isSpace = theme.sceneryType === 'space';
 
   const rockMat = new THREE.MeshStandardMaterial({ color: theme.rock, roughness: 1 });
   const rockBase = new THREE.Mesh(new THREE.BoxGeometry(8.2, 0.3, ROAD_LEN), rockMat);
@@ -414,7 +562,7 @@ function buildRoadForLevel(levelGaps, theme) {
   rockBase.receiveShadow = true;
   scene.add(rockBase); roadMeshes.push(rockBase);
 
-  const plankMat = new THREE.MeshStandardMaterial({ map: woodTex, roughness: 0.9, color: theme.plankTint });
+  const plankMat = new THREE.MeshStandardMaterial({ map: isSpace ? metalTex : woodTex, roughness: isSpace ? 0.5 : 0.9, metalness: isSpace ? 0.4 : 0, color: theme.plankTint });
   const LANE_W = 2.15;
   const roadStart = -10, roadEnd = ROAD_LEN - 10;
   LANES_X.forEach((lx, laneIdx) => {
@@ -437,7 +585,7 @@ function buildRoadForLevel(levelGaps, theme) {
     scene.add(seg); roadMeshes.push(seg);
   }
 
-  const grassMat = new THREE.MeshStandardMaterial({ map: grassTex, color: theme.groundTint, roughness: 1 });
+  const grassMat = new THREE.MeshStandardMaterial({ map: isSpace ? moonTex : grassTex, color: theme.groundTint, roughness: 1 });
   [-9, 9].forEach(x => {
     const grass = new THREE.Mesh(new THREE.BoxGeometry(10, 0.3, ROAD_LEN), grassMat);
     grass.position.set(x, -0.25, ROAD_LEN / 2 - 10);
@@ -446,18 +594,25 @@ function buildRoadForLevel(levelGaps, theme) {
   });
 
   for (let z = -5; z < ROAD_LEN; z += 9) {
-    const t1 = makeTree(-6.2 - Math.random() * 3, z, theme);
-    const t2 = makeTree(6.2 + Math.random() * 3, z, theme);
+    const t1 = isSpace ? makeSpaceProp(-6.2 - Math.random() * 3, z, theme) : makeJungleTree(-6.2 - Math.random() * 3, z, theme);
+    const t2 = isSpace ? makeSpaceProp(6.2 + Math.random() * 3, z, theme) : makeJungleTree(6.2 + Math.random() * 3, z, theme);
+    castAll(t1); castAll(t2);
     scene.add(t1, t2);
     treeMeshes.push(t1, t2);
   }
 
-  // distant volcano backdrop, further out than the treeline
+  // distant backdrop, further out than the roadside scenery
   for (let z = -10; z < ROAD_LEN; z += 46) {
-    const v1 = makeVolcano(-27 - Math.random() * 8, z + Math.random() * 10, 0.85 + Math.random() * 0.5);
-    const v2 = makeVolcano(27 + Math.random() * 8, z + 20 + Math.random() * 10, 0.85 + Math.random() * 0.5);
-    scene.add(v1, v2);
-    volcanoMeshes.push(v1, v2);
+    const scaleA = 0.85 + Math.random() * 0.5, scaleB = 0.85 + Math.random() * 0.5;
+    const zA = z + Math.random() * 10, zB = z + 20 + Math.random() * 10;
+    const b1 = isSpace
+      ? makeSpaceBackdrop(-27 - Math.random() * 8, zA, scaleA, theme.planetColor, theme.ringColor)
+      : makeJungleBackdrop(-27 - Math.random() * 8, zA, scaleA, !!theme.waterfall);
+    const b2 = isSpace
+      ? makeSpaceBackdrop(27 + Math.random() * 8, zB, scaleB, theme.planetColor, theme.ringColor)
+      : makeJungleBackdrop(27 + Math.random() * 8, zB, scaleB, !!theme.waterfall);
+    scene.add(b1, b2);
+    bgPropMeshes.push(b1, b2);
   }
 }
 
@@ -624,7 +779,7 @@ function buildRunner(scale) {
   return g;
 }
 
-const playerMesh = buildRunner(1);
+const playerMesh = buildRunner(0.88);
 scene.add(playerMesh);
 
 // ---------- fireball enemies ----------
@@ -654,134 +809,144 @@ function buildBoss(type) {
   const skinMat = new THREE.MeshStandardMaterial({ color: 0xe8a878, roughness: 0.6 });
 
   if (type === 0) {
-    // Big Sam - Green Hills camp coach: burly, flannel shirt, whistle, backwards cap
-    const shirtMat = new THREE.MeshStandardMaterial({ color: 0xb23a2e, roughness: 0.6 });
-    const plaidMat = new THREE.MeshStandardMaterial({ color: 0x2b2b2b, roughness: 0.6 });
-    const shortsMat = new THREE.MeshStandardMaterial({ color: 0xc9a86a, roughness: 0.65 });
-    const bootMat = new THREE.MeshStandardMaterial({ color: 0x5a3a22, roughness: 0.7 });
-    const capMat = new THREE.MeshStandardMaterial({ color: 0x2f5d3a, roughness: 0.55 });
+    // Vine King - Jungle Ruins: bark-skinned, vine-wrapped, leafy crown, glowing eyes
+    const barkMat = new THREE.MeshStandardMaterial({ color: 0x5a3d24, roughness: 0.9 });
+    const vineMat = new THREE.MeshStandardMaterial({ color: 0x3f7a3f, roughness: 0.75 });
+    const leafMat = new THREE.MeshStandardMaterial({ color: 0x4fae4f, roughness: 0.7 });
+    const skirtMat = new THREE.MeshStandardMaterial({ color: 0x2f6a2f, roughness: 0.8 });
+    const eyeGlowMat = new THREE.MeshStandardMaterial({ color: 0x9fffa0, emissive: 0x6fff70, emissiveIntensity: 1.6 });
 
-    const torso = new THREE.Mesh(new THREE.CapsuleGeometry(0.75, 1.1, 4, 12), shirtMat);
+    const torso = new THREE.Mesh(new THREE.CapsuleGeometry(0.72, 1.0, 4, 12), barkMat);
     torso.position.y = 1.9; g.add(torso);
-    for (let i = -1; i <= 1; i++) {
-      const stripe = new THREE.Mesh(new THREE.BoxGeometry(1.55, 0.09, 0.05), plaidMat);
-      stripe.position.set(0, 1.5 + i * 0.4, 0.72); g.add(stripe);
+    for (let i = 0; i < 3; i++) {
+      const wrap = new THREE.Mesh(new THREE.TorusGeometry(0.74, 0.05, 6, 16), vineMat);
+      wrap.position.y = 1.55 + i * 0.32;
+      wrap.rotation.set(Math.PI / 2, 0.3, i * 0.3);
+      g.add(wrap);
     }
-    const belly = new THREE.Mesh(new THREE.SphereGeometry(0.55, 14, 14), shirtMat);
-    belly.position.set(0, 1.55, 0.25); g.add(belly);
+    const skirt = new THREE.Mesh(new THREE.ConeGeometry(0.62, 0.7, 10), skirtMat);
+    skirt.position.y = 1.15; g.add(skirt);
 
-    const head = new THREE.Mesh(new THREE.SphereGeometry(0.5, 16, 16), skinMat);
-    head.position.y = 3.1; g.add(head);
-    const cap = new THREE.Mesh(new THREE.SphereGeometry(0.52, 14, 14, 0, Math.PI * 2, 0, Math.PI / 2), capMat);
-    cap.position.y = 3.15; cap.rotation.x = Math.PI; g.add(cap);
-    const capBrim = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.08, 12), capMat);
-    capBrim.rotation.z = Math.PI / 2; capBrim.position.set(0, 3.1, -0.55); g.add(capBrim);
-    const mustache = new THREE.Mesh(new THREE.TorusGeometry(0.26, 0.09, 8, 16, Math.PI), new THREE.MeshStandardMaterial({ color: 0x6b4423, roughness: 0.7 }));
-    mustache.position.set(0, 2.9, 0.44); mustache.rotation.x = Math.PI / 2; g.add(mustache);
-    addFriendlyEyes(g, 3.18, 0.42, 0.17, 0.11);
-
-    const whistleCord = new THREE.Mesh(new THREE.TorusGeometry(0.28, 0.02, 6, 16), new THREE.MeshStandardMaterial({ color: 0x1a1a1a }));
-    whistleCord.position.set(0, 2.65, 0.1); g.add(whistleCord);
-    const whistle = new THREE.Mesh(new THREE.SphereGeometry(0.11, 10, 10), new THREE.MeshStandardMaterial({ color: 0xd8d8d8, metalness: 0.8, roughness: 0.3 }));
-    whistle.position.set(0, 2.4, 0.32); g.add(whistle);
-
-    [-1.05, 1.05].forEach(x => {
-      const sleeve = new THREE.Mesh(new THREE.CapsuleGeometry(0.24, 0.5, 4, 8), shirtMat);
-      sleeve.position.set(x, 2.05, 0); sleeve.rotation.z = Math.sign(x) * 0.15; g.add(sleeve);
-      const forearm = new THREE.Mesh(new THREE.CapsuleGeometry(0.19, 0.55, 4, 8), skinMat);
-      forearm.position.set(x * 1.15, 1.35, 0.1); forearm.rotation.z = Math.sign(x) * 0.15; g.add(forearm);
-      const fist = new THREE.Mesh(new THREE.SphereGeometry(0.22, 10, 10), skinMat);
-      fist.position.set(x * 1.25, 0.95, 0.15); g.add(fist);
-    });
-    [-0.38, 0.38].forEach(x => {
-      const leg = new THREE.Mesh(new THREE.CapsuleGeometry(0.3, 0.6, 4, 8), shortsMat);
-      leg.position.set(x, 0.65, 0); g.add(leg);
-      const boot = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.3, 0.6), bootMat);
-      boot.position.set(x, 0.15, 0.1); g.add(boot);
-    });
-  } else if (type === 1) {
-    // Chef Rocco - Egg Canyon chili chef: round, chef hat, handlebar mustache
-    const coatMat = new THREE.MeshStandardMaterial({ color: 0xf5f0e6, roughness: 0.5 });
-    const bandanaMat = new THREE.MeshStandardMaterial({ color: 0xcc3333, roughness: 0.55 });
-    const buttonMat = new THREE.MeshStandardMaterial({ color: 0x333333, metalness: 0.5, roughness: 0.4 });
-    const shoeMat = new THREE.MeshStandardMaterial({ color: 0x2a2a2a, roughness: 0.6 });
-
-    const belly = new THREE.Mesh(new THREE.SphereGeometry(0.95, 16, 16), coatMat);
-    belly.position.y = 1.65; g.add(belly);
-    for (let i = 0; i < 4; i++) {
-      const btn = new THREE.Mesh(new THREE.SphereGeometry(0.07, 8, 8), buttonMat);
-      btn.position.set(0, 2.1 - i * 0.32, 0.92 - i * 0.03); g.add(btn);
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.48, 16, 16), barkMat);
+    head.position.y = 3.05; g.add(head);
+    for (let i = 0; i < 7; i++) {
+      const ang = (i / 7) * Math.PI * 2;
+      const leaf = new THREE.Mesh(new THREE.ConeGeometry(0.14, 0.4, 6), leafMat);
+      leaf.position.set(Math.cos(ang) * 0.32, 3.42, Math.sin(ang) * 0.32);
+      leaf.rotation.set(Math.sin(ang) * 0.5, 0, -Math.cos(ang) * 0.5);
+      g.add(leaf);
     }
-    const apron = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.75, 0.06, 20), bandanaMat);
-    apron.position.set(0, 1.15, 0.55); apron.rotation.x = 0.35; g.add(apron);
-
-    const head = new THREE.Mesh(new THREE.SphereGeometry(0.48, 16, 16), skinMat);
-    head.position.y = 2.85; g.add(head);
-    const hatBase = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.34, 0.35, 16), coatMat);
-    hatBase.position.y = 3.25; g.add(hatBase);
-    const hatPuff = new THREE.Mesh(new THREE.SphereGeometry(0.4, 14, 14), coatMat);
-    hatPuff.position.y = 3.6; hatPuff.scale.y = 0.8; g.add(hatPuff);
-    const mustache = new THREE.Mesh(new THREE.TorusGeometry(0.24, 0.08, 8, 16, Math.PI * 1.3), new THREE.MeshStandardMaterial({ color: 0x8a5a2e, roughness: 0.7 }));
-    mustache.position.set(0, 2.68, 0.42); mustache.rotation.set(Math.PI / 2, 0, -Math.PI * 0.15); g.add(mustache);
-    addFriendlyEyes(g, 2.95, 0.4, 0.16, 0.1);
-    const cheekL = new THREE.Mesh(new THREE.SphereGeometry(0.09, 8, 8), new THREE.MeshStandardMaterial({ color: 0xe89090 }));
-    cheekL.position.set(-0.28, 2.78, 0.38); g.add(cheekL);
-    const cheekR = cheekL.clone(); cheekR.position.x = 0.28; g.add(cheekR);
-
-    [-0.85, 0.85].forEach(x => {
-      const arm = new THREE.Mesh(new THREE.CapsuleGeometry(0.2, 0.5, 4, 8), coatMat);
-      arm.position.set(x, 1.85, 0); arm.rotation.z = Math.sign(x) * 0.3; g.add(arm);
-      const hand = new THREE.Mesh(new THREE.SphereGeometry(0.19, 8, 8), skinMat);
-      hand.position.set(x * 1.3, 1.45, 0.1); g.add(hand);
+    addFriendlyEyes(g, 3.08, 0.4, 0.16, 0.1, 0x2f6a2f);
+    [-0.16, 0.16].forEach(ex => {
+      const glow = new THREE.Mesh(new THREE.SphereGeometry(0.045, 8, 8), eyeGlowMat);
+      glow.position.set(ex, 3.08, 0.48); g.add(glow);
     });
-    [-0.32, 0.32].forEach(x => {
-      const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.2, 0.5, 10), coatMat);
-      leg.position.set(x, 0.55, 0); g.add(leg);
-      const shoe = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.24, 0.5), shoeMat);
-      shoe.position.set(x, 0.18, 0.08); g.add(shoe);
-    });
-  } else if (type === 2) {
-    // Coach Blizz - Frost Peaks snow coach: puffy parka, fur hood, goggles, mittens
-    const parkaMat = new THREE.MeshStandardMaterial({ color: 0x4a7fc9, roughness: 0.55 });
-    const furMat = new THREE.MeshStandardMaterial({ color: 0xf5f5f5, roughness: 0.8 });
-    const mittMat = new THREE.MeshStandardMaterial({ color: 0xd23b3b, roughness: 0.6 });
-    const bootMat = new THREE.MeshStandardMaterial({ color: 0x2a2a2a, roughness: 0.6 });
-    const goggleMat = new THREE.MeshStandardMaterial({ color: 0x2a3a4a, roughness: 0.2, metalness: 0.4, emissive: 0x1a4a6a, emissiveIntensity: 0.4 });
-
-    const torso = new THREE.Mesh(new THREE.SphereGeometry(0.82, 16, 16), parkaMat);
-    torso.position.y = 1.85; torso.scale.y = 1.15; g.add(torso);
-    const furTrim = new THREE.Mesh(new THREE.TorusGeometry(0.5, 0.11, 10, 20), furMat);
-    furTrim.position.y = 2.55; furTrim.rotation.x = Math.PI / 2; g.add(furTrim);
-    const zip = new THREE.Mesh(new THREE.BoxGeometry(0.1, 1.3, 0.06), new THREE.MeshStandardMaterial({ color: 0xdbe8f5, roughness: 0.4 }));
-    zip.position.set(0, 1.85, 0.78); g.add(zip);
-
-    const hood = new THREE.Mesh(new THREE.SphereGeometry(0.55, 16, 16, 0, Math.PI * 2, 0, Math.PI / 1.7), parkaMat);
-    hood.position.y = 3.0; g.add(hood);
-    const hoodFur = new THREE.Mesh(new THREE.TorusGeometry(0.44, 0.1, 10, 20), furMat);
-    hoodFur.position.y = 2.85; hoodFur.rotation.x = Math.PI / 2; g.add(hoodFur);
-    const head = new THREE.Mesh(new THREE.SphereGeometry(0.42, 16, 16), skinMat);
-    head.position.y = 2.85; g.add(head);
-    const goggleBand = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.2, 0.44), goggleMat);
-    goggleBand.position.set(0, 2.9, 0.32); g.add(goggleBand);
-    const scarf = new THREE.Mesh(new THREE.TorusGeometry(0.42, 0.13, 8, 16), mittMat);
-    scarf.position.y = 2.45; scarf.rotation.x = Math.PI / 2.2; g.add(scarf);
-    const scarfTail = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.7, 0.06), mittMat);
-    scarfTail.position.set(0.35, 1.9, 0.3); scarfTail.rotation.z = 0.3; g.add(scarfTail);
 
     [-1.0, 1.0].forEach(x => {
-      const arm = new THREE.Mesh(new THREE.CapsuleGeometry(0.26, 0.6, 4, 8), parkaMat);
+      const arm = new THREE.Mesh(new THREE.CapsuleGeometry(0.22, 0.55, 4, 8), barkMat);
       arm.position.set(x, 1.95, 0); arm.rotation.z = Math.sign(x) * 0.2; g.add(arm);
-      const mitten = new THREE.Mesh(new THREE.SphereGeometry(0.26, 10, 10), mittMat);
-      mitten.position.set(x * 1.2, 1.35, 0.1); g.add(mitten);
+      const wrap = new THREE.Mesh(new THREE.TorusGeometry(0.24, 0.035, 6, 12), vineMat);
+      wrap.position.set(x, 1.65, 0); wrap.rotation.x = Math.PI / 2; g.add(wrap);
+      const fist = new THREE.Mesh(new THREE.SphereGeometry(0.2, 10, 10), barkMat);
+      fist.position.set(x * 1.15, 1.35, 0.1); g.add(fist);
     });
-    [-0.35, 0.35].forEach(x => {
-      const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.27, 0.24, 0.6, 10), parkaMat);
-      leg.position.set(x, 0.6, 0); g.add(leg);
-      const boot = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.3, 0.58), bootMat);
-      boot.position.set(x, 0.16, 0.08); g.add(boot);
+    [-0.36, 0.36].forEach(x => {
+      const leg = new THREE.Mesh(new THREE.CapsuleGeometry(0.27, 0.55, 4, 8), barkMat);
+      leg.position.set(x, 0.65, 0); g.add(leg);
+      const root = new THREE.Mesh(new THREE.ConeGeometry(0.22, 0.35, 8), barkMat);
+      root.position.set(x, 0.18, 0.05); g.add(root);
+    });
+  } else if (type === 1) {
+    // Croc Wrangler - Jungle Falls: rugged explorer, croc-hide vest, wide-brim hat
+    const vestMat = new THREE.MeshStandardMaterial({ color: 0x3d5a34, roughness: 0.7 });
+    const scaleMat = new THREE.MeshStandardMaterial({ color: 0x2a4022, roughness: 0.8 });
+    const khakiMat = new THREE.MeshStandardMaterial({ color: 0xc9b878, roughness: 0.65 });
+    const hatMat = new THREE.MeshStandardMaterial({ color: 0xa8894f, roughness: 0.7 });
+    const bootMat = new THREE.MeshStandardMaterial({ color: 0x4a3220, roughness: 0.7 });
+    const bandanaMat = new THREE.MeshStandardMaterial({ color: 0xcc3333, roughness: 0.6 });
+
+    const torso = new THREE.Mesh(new THREE.CapsuleGeometry(0.68, 1.05, 4, 12), khakiMat);
+    torso.position.y = 1.9; g.add(torso);
+    const vest = new THREE.Mesh(new THREE.CylinderGeometry(0.74, 0.7, 0.95, 12, 1, true), vestMat);
+    vest.position.y = 1.95; g.add(vest);
+    for (let i = 0; i < 3; i++) {
+      const scale = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.16, 4), scaleMat);
+      scale.position.set(-0.3 + i * 0.3, 1.6, 0.68);
+      scale.rotation.x = Math.PI; g.add(scale);
+    }
+
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.48, 16, 16), skinMat);
+    head.position.y = 3.05; g.add(head);
+    const hatBrim = new THREE.Mesh(new THREE.CylinderGeometry(0.68, 0.68, 0.06, 16), hatMat);
+    hatBrim.position.y = 3.28; g.add(hatBrim);
+    const hatTop = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.42, 0.32, 12), hatMat);
+    hatTop.position.y = 3.48; g.add(hatTop);
+    const hatBand = new THREE.Mesh(new THREE.TorusGeometry(0.37, 0.04, 6, 16), bandanaMat);
+    hatBand.position.y = 3.34; hatBand.rotation.x = Math.PI / 2; g.add(hatBand);
+    const mustache = new THREE.Mesh(new THREE.TorusGeometry(0.24, 0.07, 8, 16, Math.PI), new THREE.MeshStandardMaterial({ color: 0x4a3320, roughness: 0.7 }));
+    mustache.position.set(0, 2.86, 0.44); mustache.rotation.x = Math.PI / 2; g.add(mustache);
+    addFriendlyEyes(g, 3.1, 0.42, 0.16, 0.1);
+    const neckerchief = new THREE.Mesh(new THREE.TorusGeometry(0.34, 0.08, 8, 16), bandanaMat);
+    neckerchief.position.y = 2.6; neckerchief.rotation.x = Math.PI / 2.2; g.add(neckerchief);
+
+    [-1.0, 1.0].forEach(x => {
+      const sleeve = new THREE.Mesh(new THREE.CapsuleGeometry(0.23, 0.5, 4, 8), khakiMat);
+      sleeve.position.set(x, 2.05, 0); sleeve.rotation.z = Math.sign(x) * 0.15; g.add(sleeve);
+      const forearm = new THREE.Mesh(new THREE.CapsuleGeometry(0.18, 0.5, 4, 8), skinMat);
+      forearm.position.set(x * 1.15, 1.4, 0.1); forearm.rotation.z = Math.sign(x) * 0.15; g.add(forearm);
+      const fist = new THREE.Mesh(new THREE.SphereGeometry(0.2, 10, 10), skinMat);
+      fist.position.set(x * 1.25, 1.0, 0.15); g.add(fist);
+    });
+    [-0.36, 0.36].forEach(x => {
+      const leg = new THREE.Mesh(new THREE.CapsuleGeometry(0.28, 0.55, 4, 8), khakiMat);
+      leg.position.set(x, 0.65, 0); g.add(leg);
+      const boot = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.32, 0.58), bootMat);
+      boot.position.set(x, 0.16, 0.1); g.add(boot);
+    });
+  } else if (type === 2) {
+    // Cosmo - Moon Base: bulky white spacesuit, round helmet, jetpack
+    const suitMat = new THREE.MeshStandardMaterial({ color: 0xf0f0f0, roughness: 0.5 });
+    const suitAccentMat = new THREE.MeshStandardMaterial({ color: 0xff7a1a, roughness: 0.5 });
+    const visorMat = new THREE.MeshStandardMaterial({ color: 0x1a2a4a, roughness: 0.15, metalness: 0.6, emissive: 0x2a4a7a, emissiveIntensity: 0.5 });
+    const jetMat = new THREE.MeshStandardMaterial({ color: 0xcfcfcf, roughness: 0.4, metalness: 0.5 });
+    const glowMat = new THREE.MeshStandardMaterial({ color: 0x6fd8ff, emissive: 0x2fb8ff, emissiveIntensity: 2 });
+
+    const torso = new THREE.Mesh(new THREE.CapsuleGeometry(0.78, 1.0, 4, 12), suitMat);
+    torso.position.y = 1.95; g.add(torso);
+    const chestPanel = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.1), suitAccentMat);
+    chestPanel.position.set(0, 2.05, 0.75); g.add(chestPanel);
+    [-0.3, 0.3].forEach(x => {
+      const tank = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 1.0, 10), jetMat);
+      tank.position.set(x, 1.95, -0.7); g.add(tank);
+      const flame = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.3, 8), glowMat);
+      flame.position.set(x, 1.35, -0.7); flame.rotation.x = Math.PI; g.add(flame);
+    });
+
+    const helmet = new THREE.Mesh(new THREE.SphereGeometry(0.56, 18, 18), suitMat);
+    helmet.position.y = 3.15; g.add(helmet);
+    const visor = new THREE.Mesh(new THREE.SphereGeometry(0.4, 14, 14, 0, Math.PI * 2, 0, Math.PI / 1.7), visorMat);
+    visor.position.set(0, 3.15, 0.18); g.add(visor);
+    addFriendlyEyes(g, 3.18, 0.52, 0.14, 0.09, 0xffffff);
+    const antenna = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.025, 0.4, 6), jetMat);
+    antenna.position.set(0.25, 3.68, -0.1); g.add(antenna);
+    const antennaTip = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 8), glowMat);
+    antennaTip.position.set(0.25, 3.9, -0.1); g.add(antennaTip);
+
+    [-1.05, 1.05].forEach(x => {
+      const arm = new THREE.Mesh(new THREE.CapsuleGeometry(0.24, 0.55, 4, 8), suitMat);
+      arm.position.set(x, 2.0, 0); arm.rotation.z = Math.sign(x) * 0.18; g.add(arm);
+      const glove = new THREE.Mesh(new THREE.SphereGeometry(0.22, 10, 10), suitAccentMat);
+      glove.position.set(x * 1.15, 1.4, 0.1); g.add(glove);
+    });
+    [-0.38, 0.38].forEach(x => {
+      const leg = new THREE.Mesh(new THREE.CapsuleGeometry(0.3, 0.55, 4, 8), suitMat);
+      leg.position.set(x, 0.65, 0); g.add(leg);
+      const boot = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.3, 0.6), suitAccentMat);
+      boot.position.set(x, 0.15, 0.1); g.add(boot);
     });
   } else {
-    // DJ Nova - Night City dance-off host: slim, neon trim, glowing headphones
+    // Nebula Nova - Deep Space Station: alien dance-off host, neon trim, glowing headphones
+    const alienSkinMat = new THREE.MeshStandardMaterial({ color: 0xb598e8, roughness: 0.5 });
     const jacketMat = new THREE.MeshStandardMaterial({ color: 0x231533, roughness: 0.4, metalness: 0.3 });
     const neonMat = new THREE.MeshStandardMaterial({ color: 0xff2fd8, emissive: 0xff2fd8, emissiveIntensity: 1.4 });
     const neonCyanMat = new THREE.MeshStandardMaterial({ color: 0x2fe8ff, emissive: 0x2fe8ff, emissiveIntensity: 1.4 });
@@ -794,13 +959,16 @@ function buildBoss(type) {
       trim.position.set(side * 0.42, 1.95, 0.5); g.add(trim);
     });
 
-    const head = new THREE.Mesh(new THREE.SphereGeometry(0.44, 16, 16), skinMat);
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.44, 16, 16), alienSkinMat);
     head.position.y = 3.15; g.add(head);
-    const hairMat = new THREE.MeshStandardMaterial({ color: 0x1a1a2a, roughness: 0.5 });
-    const hairTop = new THREE.Mesh(new THREE.SphereGeometry(0.46, 14, 14, 0, Math.PI * 2, 0, Math.PI / 2), hairMat);
-    hairTop.position.y = 3.2; g.add(hairTop);
+    [-0.2, 0.2].forEach(x => {
+      const stalk = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.03, 0.32, 6), alienSkinMat);
+      stalk.position.set(x, 3.52, 0); stalk.rotation.z = -x * 1.3; g.add(stalk);
+      const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.06, 8, 8), x < 0 ? neonMat : neonCyanMat);
+      bulb.position.set(x * 1.6, 3.68, 0); g.add(bulb);
+    });
     const headphoneBand = new THREE.Mesh(new THREE.TorusGeometry(0.46, 0.05, 8, 20, Math.PI), new THREE.MeshStandardMaterial({ color: 0x111111 }));
-    headphoneBand.position.y = 3.55; headphoneBand.rotation.z = Math.PI; g.add(headphoneBand);
+    headphoneBand.position.y = 3.5; headphoneBand.rotation.z = Math.PI; g.add(headphoneBand);
     [-1, 1].forEach(side => {
       const cup = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.14, 16), new THREE.MeshStandardMaterial({ color: 0x111111 }));
       cup.rotation.z = Math.PI / 2; cup.position.set(side * 0.46, 3.15, 0); g.add(cup);
@@ -817,7 +985,7 @@ function buildBoss(type) {
       arm.position.set(x, 2.05, 0); arm.rotation.z = Math.sign(x) * 0.25; g.add(arm);
       const wristGlow = new THREE.Mesh(new THREE.TorusGeometry(0.18, 0.03, 8, 12), x < 0 ? neonMat : neonCyanMat);
       wristGlow.position.set(x * 1.15, 1.5, 0.05); wristGlow.rotation.x = Math.PI / 2; g.add(wristGlow);
-      const hand = new THREE.Mesh(new THREE.SphereGeometry(0.17, 8, 8), skinMat);
+      const hand = new THREE.Mesh(new THREE.SphereGeometry(0.17, 8, 8), alienSkinMat);
       hand.position.set(x * 1.2, 1.35, 0.05); g.add(hand);
     });
     [-0.28, 0.28].forEach(x => {
@@ -1312,7 +1480,7 @@ function update(dt) {
   camera.position.x += (camTargetX - camera.position.x) * Math.min(1, dt * 5);
   camera.position.y = player.y + CAMERA_HEIGHT;
   camera.position.z = player.z - CAMERA_DISTANCE;
-  camera.lookAt(player.x, player.y + 1.05, player.z + 8);
+  camera.lookAt(player.x, player.y + 0.92, player.z + 8);
   camera.rotateZ((camTargetX - camera.position.x) * -0.015);
 
   // sun follows player for tight shadow frustum
@@ -1355,5 +1523,5 @@ buildLevel(1);
 renderPlayerHealth();
 updateHud();
 camera.position.set(0, CAMERA_HEIGHT, -CAMERA_DISTANCE);
-camera.lookAt(0, 1.05, 8);
+camera.lookAt(0, 0.92, 8);
 requestAnimationFrame(tick);
