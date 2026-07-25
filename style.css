@@ -65,7 +65,7 @@ html, body {
 #hud-left { display: flex; flex-direction: column; gap: 4px; }
 #sub-stats { display: flex; gap: 10px; font-size: 15px; font-weight: 700; }
 
-#boss-bar-wrap {
+#exit-wrap {
   position: absolute;
   left: 50%;
   top: 4px;
@@ -73,26 +73,26 @@ html, body {
   width: min(56vw, 360px);
   text-align: center;
 }
-#boss-bar-wrap.hidden { display: none; }
-#boss-name {
-  font-size: 14px;
+#exit-wrap.hidden { display: none; }
+#exit-label {
+  font-size: 12px;
   font-weight: 800;
-  letter-spacing: 1px;
+  letter-spacing: 2px;
   margin-bottom: 3px;
-  text-transform: uppercase;
+  color: #ffd98a;
 }
-#boss-bar-track {
-  height: 16px;
-  background: rgba(10,10,15,.8);
-  border: 2px solid rgba(255,255,255,.7);
+#exit-track {
+  height: 14px;
+  background: rgba(30,18,6,.8);
+  border: 2px solid rgba(255,214,138,.75);
   border-radius: 10px;
   overflow: hidden;
 }
-#boss-bar-fill {
+#exit-fill {
   height: 100%;
-  width: 100%;
-  background: linear-gradient(#ff6b5b, #c0392b);
-  transition: width .15s ease;
+  width: 0%;
+  background: linear-gradient(#ffe08a, #e0a020);
+  transition: width .2s linear;
 }
 
 .overlay {
@@ -103,7 +103,8 @@ html, body {
   align-items: center;
   justify-content: center;
   gap: 14px;
-  background: rgba(10, 15, 25, 0.72);
+  padding: 0 24px;
+  background: radial-gradient(ellipse at center, rgba(60, 32, 8, 0.78), rgba(14, 8, 3, 0.92));
   color: #fff;
   text-align: center;
   z-index: 10;
@@ -112,18 +113,27 @@ html, body {
 .overlay.hidden { display: none; }
 
 .overlay h1 {
-  font-size: 52px;
+  font-size: clamp(34px, 8vw, 56px);
   margin: 0;
-  letter-spacing: 1px;
-  text-shadow: 0 4px 0 rgba(0,0,0,.35);
+  letter-spacing: 2px;
+  font-weight: 900;
+  text-shadow: 0 4px 0 rgba(0,0,0,.45), 0 0 26px rgba(255, 176, 60, .5);
 }
 
 .overlay h1 .num {
   color: #ffcc00;
-  -webkit-text-stroke: 2px #cc1111;
+  -webkit-text-stroke: 2px #8a4a00;
 }
 
-.overlay p { font-size: 18px; opacity: .85; margin: 0 0 8px; }
+.overlay p { font-size: 17px; opacity: .85; margin: 0 0 8px; max-width: 34em; }
+
+.overlay p.story {
+  font-size: 19px;
+  font-style: italic;
+  color: #ffd98a;
+  opacity: .95;
+  margin-bottom: 0;
+}
 
 .overlay button {
   font-size: 22px;
