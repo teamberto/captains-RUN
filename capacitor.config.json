@@ -1,0 +1,13 @@
+{
+  "appId": "com.teamberto.captaingo",
+  "appName": "Captain Go",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https",
+    "iosScheme": "capacitor"
+  },
+  "ios": {
+    "contentInset": "never",
+    "backgroundColor": "#1a1008"
+  }
+}

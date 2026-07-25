@@ -5,6 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
 <title>Captain Go</title>
 <link rel="stylesheet" href="style.css" />
+<link rel="manifest" href="manifest.webmanifest" />
+<meta name="theme-color" content="#1a1008" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Captain Go" />
+<link rel="apple-touch-icon" href="icon-180.png" />
 </head>
 <body>
   <div id="game-wrap">
@@ -82,7 +89,7 @@
     <div id="swipe-hint" class="hidden">⬅ swipe ➡ &nbsp;·&nbsp; ⬆ jump &nbsp;·&nbsp; ⬇ slide &nbsp;·&nbsp; tap 🌀 kick</div>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+  <script src="vendor/three.min.js"></script>
   <script src="game.js"></script>
 </body>
 </html>

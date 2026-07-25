@@ -1,0 +1,16 @@
+{
+  "name": "Captain Go",
+  "short_name": "Captain Go",
+  "description": "Grab the Golden Banana and escape all 15 chambers of the collapsing temple.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "any",
+  "background_color": "#1a1008",
+  "theme_color": "#1a1008",
+  "icons": [
+    { "src": "icon-180.png",  "sizes": "180x180",   "type": "image/png" },
+    { "src": "icon-512.png",  "sizes": "512x512",   "type": "image/png", "purpose": "any" },
+    { "src": "icon-1024.png", "sizes": "1024x1024", "type": "image/png", "purpose": "any" }
+  ]
+}
