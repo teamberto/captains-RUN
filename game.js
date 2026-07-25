@@ -22,9 +22,9 @@ let state = 'start'; // start | playing | win | lose
 
 // ---------- constants ----------
 const LANES_X = [2.4, 0, -2.4]; // index 0/1/2 = screen-left/center/right (camera faces +Z, mirroring world X)
-const FORWARD_SPEED = 14;
+const FORWARD_SPEED = 17;
 const SPEED_PER_LEVEL = 0.85;
-const MAX_FORWARD_SPEED = 21.5;
+const MAX_FORWARD_SPEED = 24.5;
 const JUMP_V = 11.4;
 const GRAVITY = 26;
 const CRATE_HEIGHT = 0.9;
@@ -35,8 +35,12 @@ const PICKUP_RANGE = 1.7;
 const HAZARD_RANGE = 0.95;
 const FIRE_CLEAR_Y = 0.9;   // flames reach ~0.70, so clearing them is generous
 const KICK_DURATION = 0.42;
-const KICK_COOLDOWN = 0.5;
-const KICK_RANGE = 1.9;     // longer than HAZARD_RANGE so the kick lands before contact
+const KICK_COOLDOWN = 0.34;
+const KICK_RANGE = 2.5;     // upgraded reach - lands well before contact
+// Obstacle stone is fixed rather than per-theme so it always contrasts the light floor
+const OBSTACLE_ROCK = 0x5c5249;
+const OBSTACLE_ROCK_DEEP = 0x3b342e;
+const OBSTACLE_EDGE = 0xe8d8b0;
 const MAGNET_RANGE = 3.2;   // bananas drift toward the runner inside this distance
 const FINISH_Z = 262;
 const ROAD_LEN = FINISH_Z + 40;
@@ -111,7 +115,7 @@ const LEVEL_DATA = [
   { // 2 - Idol Hall: deep interior, torchlit, watched by stone faces
     theme: {
       name: 'Idol Hall', skyTop: 0x140c06, skyBottom: 0x6a3f18, fog: 0x4a3826,
-      groundTint: 0x7d766c, plankTint: 0xb3a897, rock: 0x5f584c,
+      groundTint: 0x7d766c, plankTint: 0xded3bf, rock: 0x5f584c,
       hemiSky: 0xd8a066, hemiGround: 0x2a1a0a, sunColor: 0xffb45a,
       stoneTint: 0xa08760, idolTint: 0xe0c070, torchColor: 0xff8c1a,
     },
@@ -126,7 +130,7 @@ const LEVEL_DATA = [
   { // 3 - Crystal Cavern: cool blue break from the warm halls
     theme: {
       name: 'Crystal Cavern', skyTop: 0x04121f, skyBottom: 0x1f5f7a, fog: 0x1b4658,
-      groundTint: 0x7d8a92, plankTint: 0xaebcc4, rock: 0x46545e,
+      groundTint: 0x7d8a92, plankTint: 0xd6e2ea, rock: 0x46545e,
       hemiSky: 0x8fd8f0, hemiGround: 0x0e2430, sunColor: 0xbfe8ff,
       stoneTint: 0x8fa3ae, idolTint: 0x7fe4ff, torchColor: 0x49c8ff,
       propAccent: 'crystal',
@@ -142,7 +146,7 @@ const LEVEL_DATA = [
   { // 4 - Lava Vault: the temple starts to burn
     theme: {
       name: 'Lava Vault', skyTop: 0x1a0603, skyBottom: 0xc03a10, fog: 0x77341c,
-      groundTint: 0x756055, plankTint: 0xb09384, rock: 0x4d3a34,
+      groundTint: 0x756055, plankTint: 0xdcc6b8, rock: 0x4d3a34,
       hemiSky: 0xff7a3a, hemiGround: 0x3a1206, sunColor: 0xff8a4a,
       stoneTint: 0x7a5442, idolTint: 0xffa050, torchColor: 0xff5a1a,
     },
@@ -157,7 +161,7 @@ const LEVEL_DATA = [
   { // 5 - Flooded Cistern: ankle-deep water either side of the causeway
     theme: {
       name: 'Flooded Cistern', skyTop: 0x061613, skyBottom: 0x2a6b62, fog: 0x1d4b46,
-      groundTint: 0x6f8480, plankTint: 0xa8b8b2, rock: 0x3f5450,
+      groundTint: 0x6f8480, plankTint: 0xd4e2dc, rock: 0x3f5450,
       hemiSky: 0x86ded0, hemiGround: 0x102a26, sunColor: 0xc8f4ec,
       stoneTint: 0x8ba39c, idolTint: 0x6fe0c0, torchColor: 0x3ad0b0,
       water: true,
@@ -188,7 +192,7 @@ const LEVEL_DATA = [
   { // 7 - Collapsing Sanctum: the roof is coming down
     theme: {
       name: 'Collapsing Sanctum', skyTop: 0x0a0710, skyBottom: 0x4a2a5a, fog: 0x2f2436,
-      groundTint: 0x7b7580, plankTint: 0xb6adb4, rock: 0x494150,
+      groundTint: 0x7b7580, plankTint: 0xdcd4da, rock: 0x494150,
       hemiSky: 0xc0a0d8, hemiGround: 0x1a1018, sunColor: 0xffd8a0,
       stoneTint: 0x8e7a76, idolTint: 0xffd479, torchColor: 0xffc23a,
     },
@@ -611,7 +615,12 @@ function buildRoadForLevel(levelGaps, theme) {
   rockBase.receiveShadow = true;
   scene.add(rockBase); roadMeshes.push(rockBase);
 
-  const plankMat = new THREE.MeshStandardMaterial({ map: templeTileTex, roughness: 0.85, color: theme.plankTint });
+  // slight self-lit floor: guarantees the walkway stays lighter than the
+  // obstacles no matter how dim the chamber's lighting is
+  const plankMat = new THREE.MeshStandardMaterial({
+    map: templeTileTex, roughness: 0.85, color: theme.plankTint,
+    emissive: new THREE.Color(theme.plankTint).multiplyScalar(0.22),
+  });
   const LANE_W = 2.15;
   const roadStart = -10, roadEnd = ROAD_LEN - 10;
   LANES_X.forEach((lx, laneIdx) => {
@@ -739,7 +748,7 @@ function buildRunner(scale) {
 
   // ===== hips: pelvis + both legs, rotates for pelvic drive =====
   const hips = new THREE.Group();
-  hips.position.y = 1.0 * scale;
+  hips.position.y = 1.13 * scale;
   g.add(hips);
 
   const pelvis = new THREE.Mesh(new THREE.SphereGeometry(0.23 * scale, 14, 10), shortsMat);
@@ -750,40 +759,40 @@ function buildRunner(scale) {
   const legR = new THREE.Group(); legR.position.set(0.115 * scale, -0.03 * scale, 0);
   const knees = [];
   [legL, legR].forEach(hip => {
-    const quad = new THREE.Mesh(new THREE.CapsuleGeometry(0.098 * scale, 0.21 * scale, 6, 10), shortsMat);
-    quad.position.y = -0.15 * scale;
+    const quad = new THREE.Mesh(new THREE.CapsuleGeometry(0.098 * scale, 0.24 * scale, 6, 10), shortsMat);
+    quad.position.y = -0.16 * scale;
     hip.add(quad);
-    const thighSkin = new THREE.Mesh(new THREE.CapsuleGeometry(0.082 * scale, 0.1 * scale, 6, 10), skinMat);
-    thighSkin.position.y = -0.33 * scale;
+    const thighSkin = new THREE.Mesh(new THREE.CapsuleGeometry(0.082 * scale, 0.13 * scale, 6, 10), skinMat);
+    thighSkin.position.y = -0.36 * scale;
     hip.add(thighSkin);
 
     // knee joint - everything below flexes here
     const knee = new THREE.Group();
-    knee.position.y = -0.42 * scale;
+    knee.position.y = -0.47 * scale;
     hip.add(knee);
     knees.push(knee);
 
     const kneeCap = new THREE.Mesh(new THREE.SphereGeometry(0.076 * scale, 10, 8), skinMat);
     knee.add(kneeCap);
-    const calf = new THREE.Mesh(new THREE.CapsuleGeometry(0.072 * scale, 0.2 * scale, 6, 10), skinMat);
+    const calf = new THREE.Mesh(new THREE.CapsuleGeometry(0.072 * scale, 0.28 * scale, 6, 10), skinMat);
     calf.scale.set(1, 1, 1.15);
-    calf.position.set(0, -0.14 * scale, -0.012 * scale);
+    calf.position.set(0, -0.18 * scale, -0.012 * scale);
     knee.add(calf);
     const ankle = new THREE.Mesh(new THREE.SphereGeometry(0.052 * scale, 8, 8), skinMat);
-    ankle.position.y = -0.28 * scale;
+    ankle.position.y = -0.36 * scale;
     knee.add(ankle);
     const shoe = new THREE.Mesh(new THREE.BoxGeometry(0.125 * scale, 0.085 * scale, 0.2 * scale), shoeMat);
-    shoe.position.set(0, -0.335 * scale, 0.035 * scale);
+    shoe.position.set(0, -0.415 * scale, 0.035 * scale);
     knee.add(shoe);
     const toe = new THREE.Mesh(new THREE.SphereGeometry(0.066 * scale, 10, 8), shoeMat);
     toe.scale.set(0.95, 0.62, 1.0);
-    toe.position.set(0, -0.335 * scale, 0.13 * scale);
+    toe.position.set(0, -0.415 * scale, 0.13 * scale);
     knee.add(toe);
     const sole = new THREE.Mesh(new THREE.BoxGeometry(0.135 * scale, 0.032 * scale, 0.29 * scale), soleMat);
-    sole.position.set(0, -0.375 * scale, 0.05 * scale);
+    sole.position.set(0, -0.455 * scale, 0.05 * scale);
     knee.add(sole);
     const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.14 * scale, 0.03 * scale, 0.07 * scale), shoeAccentMat);
-    stripe.position.set(0, -0.315 * scale, 0.075 * scale);
+    stripe.position.set(0, -0.395 * scale, 0.075 * scale);
     knee.add(stripe);
 
     hips.add(hip);
@@ -791,7 +800,7 @@ function buildRunner(scale) {
 
   // ===== torso: pivots at the hips so leaning bends the spine, not the feet =====
   const torso = new THREE.Group();
-  torso.position.y = 1.05 * scale;
+  torso.position.y = 1.18 * scale;
   g.add(torso);
 
   const waist = new THREE.Mesh(new THREE.CylinderGeometry(0.235 * scale, 0.225 * scale, 0.3 * scale, 14), shirtMat);
@@ -937,7 +946,7 @@ function buildRunner(scale) {
   return g;
 }
 
-const playerMesh = buildRunner(0.82);
+const playerMesh = buildRunner(0.78);
 scene.add(playerMesh);
 
 // ---------- fireball enemies ----------
@@ -1228,8 +1237,15 @@ function buildLevel(levelNum) {
   heartPickups.forEach(h => { scene.remove(h.mesh); disposeObject(h.mesh); });
   cookies.forEach(c => { scene.remove(c.mesh); disposeObject(c.mesh); });
 
-  const rockMat = new THREE.MeshStandardMaterial({ color: theme.rock, roughness: 0.95 });
-  const rockMossMat = new THREE.MeshStandardMaterial({ color: 0x6a8a4a, roughness: 0.9 });
+  // Obstacle rock is deliberately theme-independent: a consistent dark stone
+  // against a consistently light floor is what keeps it readable everywhere.
+  const rockMat = new THREE.MeshStandardMaterial({ color: OBSTACLE_ROCK, roughness: 0.95 });
+  const rockDeepMat = new THREE.MeshStandardMaterial({ color: OBSTACLE_ROCK_DEEP, roughness: 1 });
+  const rockEdgeMat = new THREE.MeshStandardMaterial({
+    color: OBSTACLE_EDGE, roughness: 0.6,
+    emissive: OBSTACLE_EDGE, emissiveIntensity: 0.35,
+  });
+  const rockMossMat = new THREE.MeshStandardMaterial({ color: 0x7aa050, roughness: 0.9 });
   crates = data.crates.map(c => ({ ...c, hit: false }));
   crates.forEach(c => {
     const cg = new THREE.Group();
@@ -1240,11 +1256,16 @@ function buildLevel(levelNum) {
     cg.add(boulder);
     // smaller rocks clustered at the base for a natural pile
     [[-0.42, -0.15, 0.28], [0.4, -0.2, -0.22], [0.05, -0.28, 0.4]].forEach(([x, y, z]) => {
-      const pebble = new THREE.Mesh(new THREE.IcosahedronGeometry(0.24, 0), rockMat);
+      const pebble = new THREE.Mesh(new THREE.IcosahedronGeometry(0.24, 0), rockDeepMat);
       pebble.position.set(x, y, z);
       pebble.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, 0);
       cg.add(pebble);
     });
+    // lit crest along the top edge - reads as "jump me" at a glance
+    const crest = new THREE.Mesh(new THREE.IcosahedronGeometry(0.3, 0), rockEdgeMat);
+    crest.scale.set(1.5, 0.3, 1.1);
+    crest.position.set(0, 0.44, 0);
+    cg.add(crest);
     const moss = new THREE.Mesh(new THREE.SphereGeometry(0.22, 8, 6, 0, Math.PI * 2, 0, Math.PI / 2), rockMossMat);
     moss.position.set(0.1, 0.32, 0.2);
     moss.rotation.x = -0.4;
@@ -1255,12 +1276,11 @@ function buildLevel(levelNum) {
     c.mesh = cg;
   });
 
-  const rockHighlightMat = new THREE.MeshStandardMaterial({ color: 0xd8c8a0, roughness: 0.7 });
   bars = data.bars.map(b => ({ ...b, hit: false }));
   bars.forEach(b => {
     const bg = new THREE.Group();
     [-0.7, 0.7].forEach(x => {
-      const pillar = new THREE.Mesh(new THREE.IcosahedronGeometry(0.38, 0), rockMat);
+      const pillar = new THREE.Mesh(new THREE.IcosahedronGeometry(0.38, 0), rockDeepMat);
       pillar.scale.set(0.75, 1.9, 0.75);
       pillar.position.set(x, 0.75, 0);
       pillar.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, 0);
@@ -1272,10 +1292,17 @@ function buildLevel(levelNum) {
     ledge.position.set(0, 1.45, 0);
     ledge.rotation.set(Math.random() * 0.3, Math.random() * Math.PI, Math.random() * 0.3);
     bg.add(ledge);
-    // bright mineral vein along the underside so the duck-under cue stays visible
-    const vein = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.06, 0.12), rockHighlightMat);
-    vein.position.set(0, 1.22, 0.15);
+    // bright mineral vein along the underside - the duck-under cue
+    const vein = new THREE.Mesh(new THREE.BoxGeometry(1.62, 0.1, 0.16), rockEdgeMat);
+    vein.position.set(0, 1.27, 0.16);
     bg.add(vein);
+    const veinBack = new THREE.Mesh(new THREE.BoxGeometry(1.62, 0.1, 0.16), rockEdgeMat);
+    veinBack.position.set(0, 1.27, -0.16);
+    bg.add(veinBack);
+    // lit top edge so the overhang mass separates from the wall behind it
+    const cap = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.08, 0.7), rockEdgeMat);
+    cap.position.set(0, 1.68, 0);
+    bg.add(cap);
     bg.position.set(LANES_X[b.lane], 0, b.z);
     castAll(bg);
     scene.add(bg);
@@ -1465,8 +1492,9 @@ function update(dt) {
       c.hit = true;
       c.mesh.visible = false;
       score += 25; scoreEl.textContent = score;
-      camShake = 0.22;
-      spawnSparkles(c.mesh.position.x, 0.6, c.mesh.position.z, 14, 0x9a8a70, 0.25);
+      camShake = 0.28;
+      spawnSparkles(c.mesh.position.x, 0.6, c.mesh.position.z, 18, 0x9a8a70, 0.25);
+      spawnSparkles(c.mesh.position.x, 0.45, c.mesh.position.z, 8, 0xe8d8b0, 0.6);
       sfx.smash();
       return;
     }
@@ -1475,10 +1503,21 @@ function update(dt) {
     }
   });
 
-  // bar collisions (must slide)
+  // rock tunnels: slide under them, or kick straight through
   bars.forEach(b => {
     if (b.hit) return;
-    if (rectClose(player.z, b.z, HAZARD_RANGE) && player.laneIndex === b.lane && !player.sliding) {
+    const sameLane = player.laneIndex === b.lane;
+    if (player.kicking && sameLane && rectClose(player.z, b.z, KICK_RANGE)) {
+      b.hit = true;
+      b.mesh.visible = false;
+      score += 35; scoreEl.textContent = score;
+      camShake = 0.32;
+      spawnSparkles(b.mesh.position.x, 1.2, b.mesh.position.z, 20, 0x9a8a70, 0.25);
+      spawnSparkles(b.mesh.position.x, 0.5, b.mesh.position.z, 10, 0xe8d8b0, 0.6);
+      sfx.smash();
+      return;
+    }
+    if (rectClose(player.z, b.z, HAZARD_RANGE) && sameLane && !player.sliding) {
       b.hit = true; b.mesh.visible = false; damagePlayer(1);
     }
   });
