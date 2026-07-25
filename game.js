@@ -1,4 +1,4 @@
-// ---------- Tank 95: 3D chase-cam lane runner (Three.js) ----------
+// ---------- Runner 95: 3D chase-cam lane runner (Three.js) ----------
 const canvas = document.getElementById('game');
 const scoreEl = document.getElementById('score-val');
 const playerHealthFillEl = document.getElementById('player-health-fill');
@@ -94,7 +94,7 @@ const LEVEL_DATA = [
       groundTint: 0xffffff, plankTint: 0xffffff, rock: 0x8a7a68,
       hemiSky: 0xbfe3ff, hemiGround: 0x4c7a35, sunColor: 0xfff2d8,
       leafColor: 0x3f8f4f, trunkColor: 0x7a5230,
-      bossType: 0, bossName: 'Iron Sentry',
+      bossType: 0, bossName: 'Big Sam',
     },
     crates: [{ z: 30, lane: 1 }, { z: 80, lane: 2 }, { z: 155, lane: 1 }],
     bars: [{ z: 65, lane: 1 }, { z: 170, lane: 0 }],
@@ -109,7 +109,7 @@ const LEVEL_DATA = [
       groundTint: 0xe0b070, plankTint: 0xffd9a8, rock: 0x9c5a34,
       hemiSky: 0xffd9a0, hemiGround: 0x8a5a2a, sunColor: 0xffe0b0,
       leafColor: 0xb5822f, trunkColor: 0x6b4020,
-      bossType: 1, bossName: 'Egg Pilot',
+      bossType: 1, bossName: 'Chef Rocco',
     },
     crates: [{ z: 35, lane: 0 }, { z: 90, lane: 1 }, { z: 160, lane: 2 }],
     bars: [{ z: 60, lane: 2 }, { z: 150, lane: 1 }],
@@ -124,7 +124,7 @@ const LEVEL_DATA = [
       groundTint: 0xe8f0f5, plankTint: 0xcfe0e8, rock: 0x6d7d8a,
       hemiSky: 0xdbeeff, hemiGround: 0x8a9aa8, sunColor: 0xd8ecff,
       leafColor: 0xdfeef5, trunkColor: 0x556570,
-      bossType: 0, bossName: 'Frost Sentry',
+      bossType: 2, bossName: 'Coach Blizz',
     },
     crates: [{ z: 40, lane: 2 }, { z: 95, lane: 0 }, { z: 165, lane: 1 }],
     bars: [{ z: 70, lane: 0 }, { z: 155, lane: 2 }],
@@ -139,7 +139,7 @@ const LEVEL_DATA = [
       groundTint: 0x3a3a48, plankTint: 0x55506a, rock: 0x1c1c22,
       hemiSky: 0x3a3a7a, hemiGround: 0x14141c, sunColor: 0x9fb0ff,
       leafColor: 0x2a2a55, trunkColor: 0x1a1a22,
-      bossType: 1, bossName: 'Neon Pilot',
+      bossType: 3, bossName: 'DJ Nova',
     },
     crates: [{ z: 32, lane: 1 }, { z: 85, lane: 2 }, { z: 150, lane: 0 }],
     bars: [{ z: 58, lane: 2 }, { z: 165, lane: 1 }],
@@ -337,29 +337,6 @@ function makeGrassTexture() {
   return tex;
 }
 
-function makeWarningStripeTexture() {
-  const c = document.createElement('canvas');
-  c.width = 128; c.height = 32;
-  const ctx = c.getContext('2d');
-  ctx.fillStyle = '#e0c419';
-  ctx.fillRect(0, 0, 128, 32);
-  ctx.fillStyle = '#20201c';
-  const stripeW = 18;
-  for (let x = -32; x < 128 + 32; x += stripeW * 2) {
-    ctx.save();
-    ctx.beginPath();
-    ctx.moveTo(x, 0); ctx.lineTo(x + stripeW, 0); ctx.lineTo(x + stripeW - 32, 32); ctx.lineTo(x - 32, 32);
-    ctx.closePath();
-    ctx.fill();
-    ctx.restore();
-  }
-  const tex = new THREE.CanvasTexture(c);
-  tex.wrapS = THREE.RepeatWrapping; tex.wrapT = THREE.RepeatWrapping;
-  tex.repeat.set(3, 1);
-  tex.colorSpace = THREE.SRGBColorSpace;
-  return tex;
-}
-
 const woodTex = makeWoodTexture();
 woodTex.repeat.set(1, 8);
 const grassTex = makeGrassTexture();
@@ -380,10 +357,11 @@ function clearList(list) {
   return [];
 }
 
-// ---------- world (road/grass/trees) rebuilt per level ----------
+// ---------- world (road/grass/trees/volcanoes) rebuilt per level ----------
 let roadMeshes = [];
 let grassMeshes = [];
 let treeMeshes = [];
+let volcanoMeshes = [];
 
 function makeTree(x, z, theme) {
   const g = new THREE.Group();
@@ -398,10 +376,37 @@ function makeTree(x, z, theme) {
   return g;
 }
 
+// distant background volcano: cone body, glowing crater, drifting smoke
+function makeVolcano(x, z, scale) {
+  const g = new THREE.Group();
+  const rockMat = new THREE.MeshStandardMaterial({ color: 0x5a4436, roughness: 0.95 });
+  const rockDarkMat = new THREE.MeshStandardMaterial({ color: 0x3a2c22, roughness: 0.95 });
+  const lavaMat = new THREE.MeshStandardMaterial({ color: 0xff5a1a, emissive: 0xff3300, emissiveIntensity: 2.2, roughness: 0.4 });
+  const smokeMat = new THREE.MeshStandardMaterial({ color: 0x6a6a6a, roughness: 1, transparent: true, opacity: 0.5 });
+
+  const cone = new THREE.Mesh(new THREE.CylinderGeometry(1.6 * scale, 6 * scale, 9 * scale, 9), rockMat);
+  cone.position.y = 4.5 * scale;
+  g.add(cone);
+  const crater = new THREE.Mesh(new THREE.CylinderGeometry(1.3 * scale, 1.7 * scale, 0.9 * scale, 9), rockDarkMat);
+  crater.position.y = 8.85 * scale;
+  g.add(crater);
+  const lava = new THREE.Mesh(new THREE.CylinderGeometry(1.0 * scale, 1.0 * scale, 0.12 * scale, 12), lavaMat);
+  lava.position.y = 9.2 * scale;
+  g.add(lava);
+  for (let i = 0; i < 3; i++) {
+    const puff = new THREE.Mesh(new THREE.SphereGeometry((1.1 + i * 0.5) * scale, 8, 8), smokeMat);
+    puff.position.set(0.4 * i * scale, (9.7 + i * 1.7) * scale, 0.2 * i * scale);
+    g.add(puff);
+  }
+  g.position.set(x, 0, z);
+  return g;
+}
+
 function buildRoadForLevel(levelGaps, theme) {
   roadMeshes = clearList(roadMeshes);
   grassMeshes = clearList(grassMeshes);
   treeMeshes = clearList(treeMeshes);
+  volcanoMeshes = clearList(volcanoMeshes);
 
   const rockMat = new THREE.MeshStandardMaterial({ color: theme.rock, roughness: 1 });
   const rockBase = new THREE.Mesh(new THREE.BoxGeometry(8.2, 0.3, ROAD_LEN), rockMat);
@@ -446,124 +451,180 @@ function buildRoadForLevel(levelGaps, theme) {
     scene.add(t1, t2);
     treeMeshes.push(t1, t2);
   }
+
+  // distant volcano backdrop, further out than the treeline
+  for (let z = -10; z < ROAD_LEN; z += 46) {
+    const v1 = makeVolcano(-27 - Math.random() * 8, z + Math.random() * 10, 0.85 + Math.random() * 0.5);
+    const v2 = makeVolcano(27 + Math.random() * 8, z + 20 + Math.random() * 10, 0.85 + Math.random() * 0.5);
+    scene.add(v1, v2);
+    volcanoMeshes.push(v1, v2);
+  }
 }
 
-// ---------- tank builder (player) ----------
-function makeNumberTexture(text) {
-  const c = document.createElement('canvas');
-  c.width = 256; c.height = 256;
-  const ctx = c.getContext('2d');
-  ctx.fillStyle = '#ffd400';
-  ctx.fillRect(0, 0, 256, 256);
-  ctx.fillStyle = '#c81e0f';
-  ctx.font = '900 150px -apple-system, sans-serif';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(text, 128, 138);
-  const tex = new THREE.CanvasTexture(c);
-  tex.colorSpace = THREE.SRGBColorSpace;
-  return tex;
-}
-const numberTex = makeNumberTexture('95');
-
+// ---------- runner builder (player) ----------
 function castAll(obj) {
   obj.traverse(o => { if (o.isMesh) { o.castShadow = true; } });
   return obj;
 }
 
-function buildTank(scale, color) {
+// shared cartoon eyes used by the runner and every boss character
+function addFriendlyEyes(g, y, z, spacing, size, pupilColor = 0x222222) {
+  [-spacing, spacing].forEach(ex => {
+    const eyeWhite = new THREE.Mesh(new THREE.SphereGeometry(size, 10, 10), new THREE.MeshStandardMaterial({ color: 0xffffff }));
+    eyeWhite.position.set(ex, y, z);
+    g.add(eyeWhite);
+    const pupil = new THREE.Mesh(new THREE.SphereGeometry(size * 0.5, 8, 8), new THREE.MeshStandardMaterial({ color: pupilColor }));
+    pupil.position.set(ex, y, z + size * 0.8);
+    g.add(pupil);
+  });
+}
+
+function buildRunner(scale) {
   const g = new THREE.Group();
-  const bodyMat = new THREE.MeshStandardMaterial({ color, roughness: 0.4, metalness: 0.25 });
-  const darkMat = new THREE.MeshStandardMaterial({ color: 0x1c1c1c, roughness: 0.7, metalness: 0.2 });
-  const metalMat = new THREE.MeshStandardMaterial({ color: 0xcfcfcf, roughness: 0.3, metalness: 0.7 });
-  const glassMat = new THREE.MeshStandardMaterial({ color: 0x2a2a2a, roughness: 0.15, metalness: 0.6 });
+  const skinMat = new THREE.MeshStandardMaterial({ color: 0xe8a878, roughness: 0.6 });
+  const hairMat = new THREE.MeshStandardMaterial({ color: 0x3d2415, roughness: 0.7 });
+  const hoodieMat = new THREE.MeshStandardMaterial({ color: 0x18b5a3, roughness: 0.55 });
+  const hoodieTrimMat = new THREE.MeshStandardMaterial({ color: 0xff8c1a, roughness: 0.5 });
+  const shortsMat = new THREE.MeshStandardMaterial({ color: 0xff8c1a, roughness: 0.6 });
+  const shoeMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.5 });
+  const shoeAccentMat = new THREE.MeshStandardMaterial({ color: 0x18b5a3, roughness: 0.5 });
 
-  const body = new THREE.Mesh(new THREE.BoxGeometry(1.6 * scale, 0.9 * scale, 2.4 * scale), bodyMat);
-  body.position.y = 0.65 * scale;
-  g.add(body);
+  const soleMat = new THREE.MeshStandardMaterial({ color: 0x2b2b2b, roughness: 0.7 });
 
-  // beveled trim along the body edges for a less "flat box" silhouette
-  const trimMat = new THREE.MeshStandardMaterial({ color: 0xb02615, roughness: 0.4, metalness: 0.3 });
-  const trimTop = new THREE.Mesh(new THREE.BoxGeometry(1.68 * scale, 0.1 * scale, 2.48 * scale), trimMat);
-  trimTop.position.y = 1.05 * scale;
-  g.add(trimTop);
+  // pelvis: defines the waist-to-leg transition
+  const pelvis = new THREE.Mesh(new THREE.CylinderGeometry(0.29 * scale, 0.24 * scale, 0.28 * scale, 10), shortsMat);
+  pelvis.position.y = 1.05 * scale;
+  g.add(pelvis);
 
-  const stripeMat = new THREE.MeshStandardMaterial({ color: 0xffd400, roughness: 0.5, metalness: 0.1 });
-  const stripe = new THREE.Mesh(new THREE.BoxGeometry(1.62 * scale, 0.22 * scale, 2.42 * scale), stripeMat);
-  stripe.position.y = 0.5 * scale;
-  g.add(stripe);
+  // torso: tapered chest-to-waist silhouette (wider shoulders, narrower waist)
+  const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.37 * scale, 0.28 * scale, 0.7 * scale, 12), hoodieMat);
+  torso.position.y = 1.56 * scale;
+  g.add(torso);
+  const chest = new THREE.Mesh(new THREE.SphereGeometry(0.38 * scale, 14, 10), hoodieMat);
+  chest.scale.set(1, 0.85, 0.75);
+  chest.position.set(0, 1.9 * scale, 0.04 * scale);
+  g.add(chest);
+  const zip = new THREE.Mesh(new THREE.BoxGeometry(0.07 * scale, 0.85 * scale, 0.05 * scale), hoodieTrimMat);
+  zip.position.set(0, 1.62 * scale, 0.36 * scale);
+  g.add(zip);
+  const collar = new THREE.Mesh(new THREE.TorusGeometry(0.24 * scale, 0.06 * scale, 8, 16), hoodieTrimMat);
+  collar.position.set(0, 2.05 * scale, 0);
+  collar.rotation.x = Math.PI / 2;
+  g.add(collar);
 
-  const trackMat = new THREE.MeshStandardMaterial({ color: 0x1c1c1c, roughness: 0.85 });
-  [-1, 1].forEach(side => {
-    const track = new THREE.Mesh(new THREE.BoxGeometry(0.34 * scale, 0.55 * scale, 2.6 * scale), trackMat);
-    track.position.set(side * 0.95 * scale, 0.28 * scale, 0);
-    g.add(track);
-    // wheel hubs along the track for mechanical detail
-    for (let i = -1; i <= 1; i++) {
-      const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.16 * scale, 0.16 * scale, 0.36 * scale, 10), metalMat);
-      hub.rotation.z = Math.PI / 2;
-      hub.position.set(side * 0.95 * scale, 0.24 * scale, i * 0.85 * scale);
-      g.add(hub);
+  // neck connects head to torso
+  const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.13 * scale, 0.15 * scale, 0.2 * scale, 10), skinMat);
+  neck.position.y = 2.14 * scale;
+  g.add(neck);
+
+  // head: oval shape with jaw, brow, nose, ears
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.34 * scale, 16, 16), skinMat);
+  head.scale.set(0.92, 1.08, 0.95);
+  head.position.y = 2.5 * scale;
+  g.add(head);
+  const jaw = new THREE.Mesh(new THREE.SphereGeometry(0.24 * scale, 12, 10, 0, Math.PI * 2, Math.PI * 0.45, Math.PI * 0.4), skinMat);
+  jaw.scale.set(0.95, 0.8, 0.95);
+  jaw.position.set(0, 2.3 * scale, 0.03 * scale);
+  g.add(jaw);
+  [-0.32, 0.32].forEach(ex => {
+    const ear = new THREE.Mesh(new THREE.SphereGeometry(0.07 * scale, 8, 8), skinMat);
+    ear.scale.set(0.6, 1, 1);
+    ear.position.set(ex * scale, 2.48 * scale, 0);
+    g.add(ear);
+  });
+  const nose = new THREE.Mesh(new THREE.ConeGeometry(0.045 * scale, 0.12 * scale, 8), skinMat);
+  nose.rotation.x = Math.PI / 2.3;
+  nose.position.set(0, 2.46 * scale, 0.32 * scale);
+  g.add(nose);
+  const brow = new THREE.Mesh(new THREE.BoxGeometry(0.32 * scale, 0.05 * scale, 0.08 * scale), hairMat);
+  brow.position.set(0, 2.58 * scale, 0.28 * scale);
+  g.add(brow);
+
+  // hair: cap + layered strands for a fuller, more natural look
+  const hairCap = new THREE.Mesh(new THREE.SphereGeometry(0.35 * scale, 16, 16, 0, Math.PI * 2, 0, Math.PI / 1.9), hairMat);
+  hairCap.scale.set(0.95, 1, 0.98);
+  hairCap.position.y = 2.54 * scale;
+  g.add(hairCap);
+  for (let i = 0; i < 10; i++) {
+    const ang = (i / 10) * Math.PI * 2;
+    const lift = i % 2 === 0 ? 1 : 0.7;
+    const spike = new THREE.Mesh(new THREE.ConeGeometry(0.06 * scale, 0.22 * scale * lift, 6), hairMat);
+    spike.position.set(Math.cos(ang) * 0.22 * scale, (2.76 + 0.03 * lift) * scale, Math.sin(ang) * 0.22 * scale - 0.02 * scale);
+    spike.rotation.set(Math.sin(ang) * 0.35, 0, -Math.cos(ang) * 0.35);
+    g.add(spike);
+  }
+
+  // face: big friendly eyes + open-mouth smile
+  addFriendlyEyes(g, 2.53 * scale, 0.3 * scale, 0.12 * scale, 0.08 * scale);
+  const mouth = new THREE.Mesh(new THREE.TorusGeometry(0.11 * scale, 0.04 * scale, 8, 12, Math.PI), new THREE.MeshStandardMaterial({ color: 0x7a1f1f }));
+  mouth.position.set(0, 2.34 * scale, 0.31 * scale);
+  mouth.rotation.z = Math.PI;
+  g.add(mouth);
+
+  // arms: shoulder pivot -> upper arm -> elbow joint -> forearm -> hand with fingers
+  const armL = new THREE.Group(); armL.position.set(-0.42 * scale, 1.95 * scale, 0);
+  const armR = new THREE.Group(); armR.position.set(0.42 * scale, 1.95 * scale, 0);
+  [armL, armR].forEach(pivot => {
+    const shoulder = new THREE.Mesh(new THREE.SphereGeometry(0.13 * scale, 10, 10), hoodieMat);
+    pivot.add(shoulder);
+    const upperArm = new THREE.Mesh(new THREE.CapsuleGeometry(0.1 * scale, 0.28 * scale, 4, 8), hoodieMat);
+    upperArm.position.y = -0.2 * scale;
+    pivot.add(upperArm);
+    const elbow = new THREE.Mesh(new THREE.SphereGeometry(0.085 * scale, 8, 8), skinMat);
+    elbow.position.y = -0.36 * scale;
+    pivot.add(elbow);
+    const forearm = new THREE.Mesh(new THREE.CapsuleGeometry(0.085 * scale, 0.26 * scale, 4, 8), skinMat);
+    forearm.position.y = -0.52 * scale;
+    pivot.add(forearm);
+    const hand = new THREE.Mesh(new THREE.SphereGeometry(0.1 * scale, 8, 8), skinMat);
+    hand.scale.set(0.85, 1, 0.6);
+    hand.position.y = -0.68 * scale;
+    pivot.add(hand);
+    for (let f = -1; f <= 1; f++) {
+      const finger = new THREE.Mesh(new THREE.CapsuleGeometry(0.018 * scale, 0.07 * scale, 2, 6), skinMat);
+      finger.position.set(f * 0.045 * scale, -0.76 * scale, 0.03 * scale);
+      pivot.add(finger);
     }
+    g.add(pivot);
   });
 
-  const turret = new THREE.Mesh(new THREE.CylinderGeometry(0.5 * scale, 0.55 * scale, 0.5 * scale, 16), bodyMat);
-  turret.position.set(0, 1.25 * scale, 0.1 * scale);
-  g.add(turret);
-  const turretRing = new THREE.Mesh(new THREE.TorusGeometry(0.52 * scale, 0.05 * scale, 8, 16), metalMat);
-  turretRing.rotation.x = Math.PI / 2;
-  turretRing.position.set(0, 1.02 * scale, 0.1 * scale);
-  g.add(turretRing);
-
-  const cannon = new THREE.Mesh(new THREE.CylinderGeometry(0.11 * scale, 0.11 * scale, 1.5 * scale, 10), metalMat);
-  cannon.rotation.x = Math.PI / 2;
-  cannon.position.set(0, 1.25 * scale, 0.1 * scale + 0.9 * scale);
-  g.add(cannon);
-  const cannonTip = new THREE.Mesh(new THREE.CylinderGeometry(0.15 * scale, 0.13 * scale, 0.22 * scale, 10), darkMat);
-  cannonTip.rotation.x = Math.PI / 2;
-  cannonTip.position.set(0, 1.25 * scale, 0.1 * scale + 1.62 * scale);
-  g.add(cannonTip);
-
-  // antenna
-  const antenna = new THREE.Mesh(new THREE.CylinderGeometry(0.02 * scale, 0.025 * scale, 0.7 * scale, 6), metalMat);
-  antenna.position.set(0.3 * scale, 1.75 * scale, -0.15 * scale);
-  g.add(antenna);
-  const antennaTip = new THREE.Mesh(new THREE.SphereGeometry(0.05 * scale, 8, 8), new THREE.MeshStandardMaterial({ color: 0xff3333, emissive: 0xff0000, emissiveIntensity: 1 }));
-  antennaTip.position.set(0.3 * scale, 2.1 * scale, -0.15 * scale);
-  g.add(antennaTip);
-
-  // exhaust pipes at rear corners
-  [-0.55, 0.55].forEach(x => {
-    const pipe = new THREE.Mesh(new THREE.CylinderGeometry(0.09 * scale, 0.09 * scale, 0.4 * scale, 8), darkMat);
-    pipe.position.set(x * scale, 1.0 * scale, -1.22 * scale);
-    g.add(pipe);
+  // legs: hip pivot -> thigh -> knee joint -> shin -> ankle -> shoe
+  const legL = new THREE.Group(); legL.position.set(-0.16 * scale, 1.02 * scale, 0);
+  const legR = new THREE.Group(); legR.position.set(0.16 * scale, 1.02 * scale, 0);
+  [legL, legR].forEach(pivot => {
+    const thigh = new THREE.Mesh(new THREE.CapsuleGeometry(0.135 * scale, 0.28 * scale, 4, 8), shortsMat);
+    thigh.position.y = -0.2 * scale;
+    pivot.add(thigh);
+    const knee = new THREE.Mesh(new THREE.SphereGeometry(0.115 * scale, 8, 8), skinMat);
+    knee.position.y = -0.4 * scale;
+    pivot.add(knee);
+    const shin = new THREE.Mesh(new THREE.CapsuleGeometry(0.1 * scale, 0.34 * scale, 4, 8), skinMat);
+    shin.position.y = -0.6 * scale;
+    pivot.add(shin);
+    const ankle = new THREE.Mesh(new THREE.SphereGeometry(0.08 * scale, 8, 8), skinMat);
+    ankle.position.y = -0.8 * scale;
+    pivot.add(ankle);
+    const shoe = new THREE.Mesh(new THREE.BoxGeometry(0.2 * scale, 0.13 * scale, 0.3 * scale), shoeMat);
+    shoe.position.set(0, -0.87 * scale, 0.05 * scale);
+    pivot.add(shoe);
+    const toe = new THREE.Mesh(new THREE.BoxGeometry(0.19 * scale, 0.1 * scale, 0.1 * scale), shoeMat);
+    toe.position.set(0, -0.88 * scale, 0.2 * scale);
+    pivot.add(toe);
+    const sole = new THREE.Mesh(new THREE.BoxGeometry(0.21 * scale, 0.04 * scale, 0.34 * scale), soleMat);
+    sole.position.set(0, -0.94 * scale, 0.06 * scale);
+    pivot.add(sole);
+    const shoeStripe = new THREE.Mesh(new THREE.BoxGeometry(0.21 * scale, 0.05 * scale, 0.09 * scale), shoeAccentMat);
+    shoeStripe.position.set(0, -0.83 * scale, 0.12 * scale);
+    pivot.add(shoeStripe);
+    g.add(pivot);
   });
 
-  // headlights at front-bottom
-  [-0.55, 0.55].forEach(x => {
-    const light = new THREE.Mesh(new THREE.SphereGeometry(0.09 * scale, 8, 8), new THREE.MeshStandardMaterial({ color: 0xfff6c8, emissive: 0xffee88, emissiveIntensity: 1.4 }));
-    light.position.set(x * scale, 0.55 * scale, 1.21 * scale);
-    g.add(light);
-  });
-
-  [-0.18, 0.18].forEach(ex => {
-    const eyeWhite = new THREE.Mesh(new THREE.SphereGeometry(0.13 * scale, 10, 10), new THREE.MeshStandardMaterial({ color: 0xffffff }));
-    eyeWhite.position.set(ex * scale, 1.45 * scale, 0.55 * scale);
-    const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.06 * scale, 8, 8), new THREE.MeshStandardMaterial({ color: 0x222222 }));
-    pupil.position.set(ex * scale, 1.45 * scale, 0.63 * scale);
-    g.add(eyeWhite, pupil);
-  });
-
-  const decal = new THREE.Mesh(new THREE.PlaneGeometry(1.0 * scale, 1.0 * scale), new THREE.MeshStandardMaterial({ map: numberTex, roughness: 0.6 }));
-  decal.rotation.y = Math.PI;
-  decal.position.set(0, 0.68 * scale, -1.21 * scale);
-  g.add(decal);
-
+  g.userData = { armL, armR, legL, legR };
   castAll(g);
   return g;
 }
 
-const playerMesh = buildTank(1, 0xff3b30);
+const playerMesh = buildRunner(1);
 scene.add(playerMesh);
 
 // ---------- fireball enemies ----------
@@ -587,71 +648,217 @@ function makeFireballMesh() {
   return g;
 }
 
-// ---------- boss builder ----------
-function buildBoss(type, palette) {
+// ---------- boss builder: one friendly-but-formidable character per level ----------
+function buildBoss(type) {
   const g = new THREE.Group();
-  const bodyMat = new THREE.MeshStandardMaterial({ color: palette.body, roughness: 0.4, metalness: 0.6 });
-  const accentMat = new THREE.MeshStandardMaterial({ color: palette.accent, roughness: 0.3, metalness: 0.5 });
-  const eyeMat = new THREE.MeshStandardMaterial({ color: 0xff2222, emissive: 0xff0000, emissiveIntensity: 2 });
+  const skinMat = new THREE.MeshStandardMaterial({ color: 0xe8a878, roughness: 0.6 });
 
   if (type === 0) {
-    // Iron Sentry: boxy torso, cylindrical head, single glowing eye
-    const torso = new THREE.Mesh(new THREE.BoxGeometry(2.2, 2.0, 1.6), bodyMat); torso.position.y = 1.7; g.add(torso);
-    const chestVent = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.6, 0.1), accentMat); chestVent.position.set(0, 1.7, 0.85); g.add(chestVent);
-    const head = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.65, 0.7, 10), accentMat); head.position.y = 3.0; g.add(head);
-    const eye = new THREE.Mesh(new THREE.SphereGeometry(0.24, 10, 10), eyeMat); eye.position.set(0, 3.0, 0.6); g.add(eye);
-    [-1.35, 1.35].forEach(x => {
-      const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.26, 1.7, 8), bodyMat);
-      arm.position.set(x, 1.75, 0); arm.rotation.z = (Math.PI / 20) * Math.sign(x);
-      g.add(arm);
+    // Big Sam - Green Hills camp coach: burly, flannel shirt, whistle, backwards cap
+    const shirtMat = new THREE.MeshStandardMaterial({ color: 0xb23a2e, roughness: 0.6 });
+    const plaidMat = new THREE.MeshStandardMaterial({ color: 0x2b2b2b, roughness: 0.6 });
+    const shortsMat = new THREE.MeshStandardMaterial({ color: 0xc9a86a, roughness: 0.65 });
+    const bootMat = new THREE.MeshStandardMaterial({ color: 0x5a3a22, roughness: 0.7 });
+    const capMat = new THREE.MeshStandardMaterial({ color: 0x2f5d3a, roughness: 0.55 });
+
+    const torso = new THREE.Mesh(new THREE.CapsuleGeometry(0.75, 1.1, 4, 12), shirtMat);
+    torso.position.y = 1.9; g.add(torso);
+    for (let i = -1; i <= 1; i++) {
+      const stripe = new THREE.Mesh(new THREE.BoxGeometry(1.55, 0.09, 0.05), plaidMat);
+      stripe.position.set(0, 1.5 + i * 0.4, 0.72); g.add(stripe);
+    }
+    const belly = new THREE.Mesh(new THREE.SphereGeometry(0.55, 14, 14), shirtMat);
+    belly.position.set(0, 1.55, 0.25); g.add(belly);
+
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.5, 16, 16), skinMat);
+    head.position.y = 3.1; g.add(head);
+    const cap = new THREE.Mesh(new THREE.SphereGeometry(0.52, 14, 14, 0, Math.PI * 2, 0, Math.PI / 2), capMat);
+    cap.position.y = 3.15; cap.rotation.x = Math.PI; g.add(cap);
+    const capBrim = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.08, 12), capMat);
+    capBrim.rotation.z = Math.PI / 2; capBrim.position.set(0, 3.1, -0.55); g.add(capBrim);
+    const mustache = new THREE.Mesh(new THREE.TorusGeometry(0.26, 0.09, 8, 16, Math.PI), new THREE.MeshStandardMaterial({ color: 0x6b4423, roughness: 0.7 }));
+    mustache.position.set(0, 2.9, 0.44); mustache.rotation.x = Math.PI / 2; g.add(mustache);
+    addFriendlyEyes(g, 3.18, 0.42, 0.17, 0.11);
+
+    const whistleCord = new THREE.Mesh(new THREE.TorusGeometry(0.28, 0.02, 6, 16), new THREE.MeshStandardMaterial({ color: 0x1a1a1a }));
+    whistleCord.position.set(0, 2.65, 0.1); g.add(whistleCord);
+    const whistle = new THREE.Mesh(new THREE.SphereGeometry(0.11, 10, 10), new THREE.MeshStandardMaterial({ color: 0xd8d8d8, metalness: 0.8, roughness: 0.3 }));
+    whistle.position.set(0, 2.4, 0.32); g.add(whistle);
+
+    [-1.05, 1.05].forEach(x => {
+      const sleeve = new THREE.Mesh(new THREE.CapsuleGeometry(0.24, 0.5, 4, 8), shirtMat);
+      sleeve.position.set(x, 2.05, 0); sleeve.rotation.z = Math.sign(x) * 0.15; g.add(sleeve);
+      const forearm = new THREE.Mesh(new THREE.CapsuleGeometry(0.19, 0.55, 4, 8), skinMat);
+      forearm.position.set(x * 1.15, 1.35, 0.1); forearm.rotation.z = Math.sign(x) * 0.15; g.add(forearm);
+      const fist = new THREE.Mesh(new THREE.SphereGeometry(0.22, 10, 10), skinMat);
+      fist.position.set(x * 1.25, 0.95, 0.15); g.add(fist);
     });
-    [-0.7, 0.7].forEach(x => {
-      const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.38, 1.5, 8), accentMat);
-      leg.position.set(x, 0.75, 0); g.add(leg);
+    [-0.38, 0.38].forEach(x => {
+      const leg = new THREE.Mesh(new THREE.CapsuleGeometry(0.3, 0.6, 4, 8), shortsMat);
+      leg.position.set(x, 0.65, 0); g.add(leg);
+      const boot = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.3, 0.6), bootMat);
+      boot.position.set(x, 0.15, 0.1); g.add(boot);
+    });
+  } else if (type === 1) {
+    // Chef Rocco - Egg Canyon chili chef: round, chef hat, handlebar mustache
+    const coatMat = new THREE.MeshStandardMaterial({ color: 0xf5f0e6, roughness: 0.5 });
+    const bandanaMat = new THREE.MeshStandardMaterial({ color: 0xcc3333, roughness: 0.55 });
+    const buttonMat = new THREE.MeshStandardMaterial({ color: 0x333333, metalness: 0.5, roughness: 0.4 });
+    const shoeMat = new THREE.MeshStandardMaterial({ color: 0x2a2a2a, roughness: 0.6 });
+
+    const belly = new THREE.Mesh(new THREE.SphereGeometry(0.95, 16, 16), coatMat);
+    belly.position.y = 1.65; g.add(belly);
+    for (let i = 0; i < 4; i++) {
+      const btn = new THREE.Mesh(new THREE.SphereGeometry(0.07, 8, 8), buttonMat);
+      btn.position.set(0, 2.1 - i * 0.32, 0.92 - i * 0.03); g.add(btn);
+    }
+    const apron = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.75, 0.06, 20), bandanaMat);
+    apron.position.set(0, 1.15, 0.55); apron.rotation.x = 0.35; g.add(apron);
+
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.48, 16, 16), skinMat);
+    head.position.y = 2.85; g.add(head);
+    const hatBase = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.34, 0.35, 16), coatMat);
+    hatBase.position.y = 3.25; g.add(hatBase);
+    const hatPuff = new THREE.Mesh(new THREE.SphereGeometry(0.4, 14, 14), coatMat);
+    hatPuff.position.y = 3.6; hatPuff.scale.y = 0.8; g.add(hatPuff);
+    const mustache = new THREE.Mesh(new THREE.TorusGeometry(0.24, 0.08, 8, 16, Math.PI * 1.3), new THREE.MeshStandardMaterial({ color: 0x8a5a2e, roughness: 0.7 }));
+    mustache.position.set(0, 2.68, 0.42); mustache.rotation.set(Math.PI / 2, 0, -Math.PI * 0.15); g.add(mustache);
+    addFriendlyEyes(g, 2.95, 0.4, 0.16, 0.1);
+    const cheekL = new THREE.Mesh(new THREE.SphereGeometry(0.09, 8, 8), new THREE.MeshStandardMaterial({ color: 0xe89090 }));
+    cheekL.position.set(-0.28, 2.78, 0.38); g.add(cheekL);
+    const cheekR = cheekL.clone(); cheekR.position.x = 0.28; g.add(cheekR);
+
+    [-0.85, 0.85].forEach(x => {
+      const arm = new THREE.Mesh(new THREE.CapsuleGeometry(0.2, 0.5, 4, 8), coatMat);
+      arm.position.set(x, 1.85, 0); arm.rotation.z = Math.sign(x) * 0.3; g.add(arm);
+      const hand = new THREE.Mesh(new THREE.SphereGeometry(0.19, 8, 8), skinMat);
+      hand.position.set(x * 1.3, 1.45, 0.1); g.add(hand);
+    });
+    [-0.32, 0.32].forEach(x => {
+      const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.2, 0.5, 10), coatMat);
+      leg.position.set(x, 0.55, 0); g.add(leg);
+      const shoe = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.24, 0.5), shoeMat);
+      shoe.position.set(x, 0.18, 0.08); g.add(shoe);
+    });
+  } else if (type === 2) {
+    // Coach Blizz - Frost Peaks snow coach: puffy parka, fur hood, goggles, mittens
+    const parkaMat = new THREE.MeshStandardMaterial({ color: 0x4a7fc9, roughness: 0.55 });
+    const furMat = new THREE.MeshStandardMaterial({ color: 0xf5f5f5, roughness: 0.8 });
+    const mittMat = new THREE.MeshStandardMaterial({ color: 0xd23b3b, roughness: 0.6 });
+    const bootMat = new THREE.MeshStandardMaterial({ color: 0x2a2a2a, roughness: 0.6 });
+    const goggleMat = new THREE.MeshStandardMaterial({ color: 0x2a3a4a, roughness: 0.2, metalness: 0.4, emissive: 0x1a4a6a, emissiveIntensity: 0.4 });
+
+    const torso = new THREE.Mesh(new THREE.SphereGeometry(0.82, 16, 16), parkaMat);
+    torso.position.y = 1.85; torso.scale.y = 1.15; g.add(torso);
+    const furTrim = new THREE.Mesh(new THREE.TorusGeometry(0.5, 0.11, 10, 20), furMat);
+    furTrim.position.y = 2.55; furTrim.rotation.x = Math.PI / 2; g.add(furTrim);
+    const zip = new THREE.Mesh(new THREE.BoxGeometry(0.1, 1.3, 0.06), new THREE.MeshStandardMaterial({ color: 0xdbe8f5, roughness: 0.4 }));
+    zip.position.set(0, 1.85, 0.78); g.add(zip);
+
+    const hood = new THREE.Mesh(new THREE.SphereGeometry(0.55, 16, 16, 0, Math.PI * 2, 0, Math.PI / 1.7), parkaMat);
+    hood.position.y = 3.0; g.add(hood);
+    const hoodFur = new THREE.Mesh(new THREE.TorusGeometry(0.44, 0.1, 10, 20), furMat);
+    hoodFur.position.y = 2.85; hoodFur.rotation.x = Math.PI / 2; g.add(hoodFur);
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.42, 16, 16), skinMat);
+    head.position.y = 2.85; g.add(head);
+    const goggleBand = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.2, 0.44), goggleMat);
+    goggleBand.position.set(0, 2.9, 0.32); g.add(goggleBand);
+    const scarf = new THREE.Mesh(new THREE.TorusGeometry(0.42, 0.13, 8, 16), mittMat);
+    scarf.position.y = 2.45; scarf.rotation.x = Math.PI / 2.2; g.add(scarf);
+    const scarfTail = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.7, 0.06), mittMat);
+    scarfTail.position.set(0.35, 1.9, 0.3); scarfTail.rotation.z = 0.3; g.add(scarfTail);
+
+    [-1.0, 1.0].forEach(x => {
+      const arm = new THREE.Mesh(new THREE.CapsuleGeometry(0.26, 0.6, 4, 8), parkaMat);
+      arm.position.set(x, 1.95, 0); arm.rotation.z = Math.sign(x) * 0.2; g.add(arm);
+      const mitten = new THREE.Mesh(new THREE.SphereGeometry(0.26, 10, 10), mittMat);
+      mitten.position.set(x * 1.2, 1.35, 0.1); g.add(mitten);
+    });
+    [-0.35, 0.35].forEach(x => {
+      const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.27, 0.24, 0.6, 10), parkaMat);
+      leg.position.set(x, 0.6, 0); g.add(leg);
+      const boot = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.3, 0.58), bootMat);
+      boot.position.set(x, 0.16, 0.08); g.add(boot);
     });
   } else {
-    // Egg Pilot: round pod body, dome head, mustache trim, hover base
-    const pod = new THREE.Mesh(new THREE.SphereGeometry(1.3, 16, 16), bodyMat); pod.scale.set(1, 0.85, 1); pod.position.y = 2.0; g.add(pod);
-    const dome = new THREE.Mesh(new THREE.SphereGeometry(0.6, 12, 12, 0, Math.PI * 2, 0, Math.PI / 2), accentMat); dome.position.y = 2.85; g.add(dome);
-    const mustache = new THREE.Mesh(new THREE.TorusGeometry(0.42, 0.09, 8, 16, Math.PI), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.6 }));
-    mustache.position.set(0, 2.4, 0.98); mustache.rotation.x = Math.PI / 2; g.add(mustache);
-    const eye = new THREE.Mesh(new THREE.SphereGeometry(0.22, 10, 10), eyeMat); eye.position.set(0, 2.8, 0.55); g.add(eye);
-    [-1.15, 1.15].forEach(x => {
-      const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 1.3, 8), accentMat);
-      arm.position.set(x, 1.7, 0); g.add(arm);
-      const fist = new THREE.Mesh(new THREE.SphereGeometry(0.24, 8, 8), bodyMat);
-      fist.position.set(x, 1.05, 0); g.add(fist);
+    // DJ Nova - Night City dance-off host: slim, neon trim, glowing headphones
+    const jacketMat = new THREE.MeshStandardMaterial({ color: 0x231533, roughness: 0.4, metalness: 0.3 });
+    const neonMat = new THREE.MeshStandardMaterial({ color: 0xff2fd8, emissive: 0xff2fd8, emissiveIntensity: 1.4 });
+    const neonCyanMat = new THREE.MeshStandardMaterial({ color: 0x2fe8ff, emissive: 0x2fe8ff, emissiveIntensity: 1.4 });
+    const pantsMat = new THREE.MeshStandardMaterial({ color: 0x14101f, roughness: 0.5 });
+
+    const torso = new THREE.Mesh(new THREE.CapsuleGeometry(0.6, 1.1, 4, 12), jacketMat);
+    torso.position.y = 1.95; g.add(torso);
+    [-1, 1].forEach(side => {
+      const trim = new THREE.Mesh(new THREE.BoxGeometry(0.07, 1.3, 0.07), side < 0 ? neonMat : neonCyanMat);
+      trim.position.set(side * 0.42, 1.95, 0.5); g.add(trim);
     });
-    const hoverBase = new THREE.Mesh(new THREE.CylinderGeometry(1.0, 0.6, 0.5, 16), bodyMat); hoverBase.position.y = 0.5; g.add(hoverBase);
-    const hoverGlow = new THREE.Mesh(new THREE.CylinderGeometry(0.85, 0.85, 0.06, 16), new THREE.MeshStandardMaterial({ color: 0x66ccff, emissive: 0x2299ff, emissiveIntensity: 1.5 }));
-    hoverGlow.position.y = 0.25; g.add(hoverGlow);
+
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.44, 16, 16), skinMat);
+    head.position.y = 3.15; g.add(head);
+    const hairMat = new THREE.MeshStandardMaterial({ color: 0x1a1a2a, roughness: 0.5 });
+    const hairTop = new THREE.Mesh(new THREE.SphereGeometry(0.46, 14, 14, 0, Math.PI * 2, 0, Math.PI / 2), hairMat);
+    hairTop.position.y = 3.2; g.add(hairTop);
+    const headphoneBand = new THREE.Mesh(new THREE.TorusGeometry(0.46, 0.05, 8, 20, Math.PI), new THREE.MeshStandardMaterial({ color: 0x111111 }));
+    headphoneBand.position.y = 3.55; headphoneBand.rotation.z = Math.PI; g.add(headphoneBand);
+    [-1, 1].forEach(side => {
+      const cup = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.14, 16), new THREE.MeshStandardMaterial({ color: 0x111111 }));
+      cup.rotation.z = Math.PI / 2; cup.position.set(side * 0.46, 3.15, 0); g.add(cup);
+      const glow = new THREE.Mesh(new THREE.TorusGeometry(0.16, 0.03, 8, 16), side < 0 ? neonMat : neonCyanMat);
+      glow.rotation.y = Math.PI / 2; glow.position.set(side * 0.53, 3.15, 0); g.add(glow);
+    });
+    const shades = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.16, 0.44), new THREE.MeshStandardMaterial({ color: 0x0a0a0a, roughness: 0.1, metalness: 0.6 }));
+    shades.position.set(0, 3.15, 0.34); g.add(shades);
+    const shadeGlow = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.03, 0.05), neonCyanMat);
+    shadeGlow.position.set(0, 3.24, 0.5); g.add(shadeGlow);
+
+    [-0.85, 0.85].forEach(x => {
+      const arm = new THREE.Mesh(new THREE.CapsuleGeometry(0.18, 0.6, 4, 8), jacketMat);
+      arm.position.set(x, 2.05, 0); arm.rotation.z = Math.sign(x) * 0.25; g.add(arm);
+      const wristGlow = new THREE.Mesh(new THREE.TorusGeometry(0.18, 0.03, 8, 12), x < 0 ? neonMat : neonCyanMat);
+      wristGlow.position.set(x * 1.15, 1.5, 0.05); wristGlow.rotation.x = Math.PI / 2; g.add(wristGlow);
+      const hand = new THREE.Mesh(new THREE.SphereGeometry(0.17, 8, 8), skinMat);
+      hand.position.set(x * 1.2, 1.35, 0.05); g.add(hand);
+    });
+    [-0.28, 0.28].forEach(x => {
+      const leg = new THREE.Mesh(new THREE.CapsuleGeometry(0.22, 0.75, 4, 8), pantsMat);
+      leg.position.set(x, 0.7, 0); g.add(leg);
+      const shoe = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.22, 0.5), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.4 }));
+      shoe.position.set(x, 0.18, 0.08); g.add(shoe);
+      const sole = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.06, 0.52), x < 0 ? neonMat : neonCyanMat);
+      sole.position.set(x, 0.06, 0.08); g.add(sole);
+    });
   }
   castAll(g);
   return g;
 }
-const BOSS_PALETTES = [
-  { body: 0x9fb3c8, accent: 0xdde8f0 },
-  { body: 0xcc2b2b, accent: 0xf2f2f2 },
-  { body: 0x5a7fbf, accent: 0xe8f2ff },
-  { body: 0x6a2bcc, accent: 0xe9dbff },
-];
 let bossMesh = null;
 
-// ---------- coin collectible ----------
-function makeCoinMesh() {
+// ---------- banana collectible ----------
+function makeBananaMesh() {
   const g = new THREE.Group();
-  const goldMat = new THREE.MeshStandardMaterial({ color: 0xf7c600, emissive: 0x4a3400, emissiveIntensity: 0.5, metalness: 0.95, roughness: 0.1 });
-  const coin = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 0.24, 24), goldMat);
-  coin.rotation.x = Math.PI / 2;
-  g.add(coin);
-  // raised rim for a defined coin edge
-  const rim = new THREE.Mesh(new THREE.TorusGeometry(0.38, 0.05, 8, 24), goldMat);
-  rim.rotation.x = Math.PI / 2;
-  g.add(rim);
-  // embossed center boss for extra definition/shine highlights
-  const emboss = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.26, 20), goldMat);
-  emboss.rotation.x = Math.PI / 2;
-  g.add(emboss);
+  const peelMat = new THREE.MeshStandardMaterial({ color: 0xf5d40a, emissive: 0x4a3d00, emissiveIntensity: 0.35, roughness: 0.4 });
+  const tipMat = new THREE.MeshStandardMaterial({ color: 0x5a4020, roughness: 0.7 });
+  // curved body: partial torus arc gives the banana's natural bend
+  const body = new THREE.Mesh(new THREE.TorusGeometry(0.5, 0.16, 10, 16, Math.PI * 0.62), peelMat);
+  g.add(body);
+  // ridge lines along the peel for definition
+  for (let i = -1; i <= 1; i++) {
+    const ridge = new THREE.Mesh(new THREE.TorusGeometry(0.5, 0.03, 4, 16, Math.PI * 0.62), new THREE.MeshStandardMaterial({ color: 0xd4b400, roughness: 0.5 }));
+    ridge.position.y = i * 0.13;
+    ridge.rotation.z = i * 0.05;
+    g.add(ridge);
+  }
+  // stem + dark tip at the two ends
+  const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.07, 0.16, 8), tipMat);
+  stem.position.set(0.5, 0, 0);
+  stem.rotation.z = Math.PI / 2.4;
+  g.add(stem);
+  const tip = new THREE.Mesh(new THREE.ConeGeometry(0.09, 0.16, 8), tipMat);
+  tip.position.set(-0.5, 0, 0);
+  tip.rotation.z = -Math.PI / 1.8;
+  g.add(tip);
+  g.scale.set(0.55, 0.55, 0.55);
   return g;
 }
 
@@ -692,7 +899,7 @@ function renderPlayerHealth() {
 }
 function updateHud() {
   levelValEl.textContent = `LV ${level}`;
-  ringValEl.textContent = `🪙 ${ringCount}`;
+  ringValEl.textContent = `🍌 ${ringCount}`;
   chargeValEl.textContent = `⚡ ${powerCharges}`;
 }
 
@@ -714,44 +921,54 @@ function buildLevel(levelNum) {
   rings.forEach(r => { scene.remove(r.mesh); disposeObject(r.mesh); });
   heartPickups.forEach(h => { scene.remove(h.mesh); disposeObject(h.mesh); });
 
-  const crateMat = new THREE.MeshStandardMaterial({ map: makeWoodTexture(), roughness: 0.85 });
-  const braceMat = new THREE.MeshStandardMaterial({ color: 0x2b2b2b, roughness: 0.4, metalness: 0.6 });
+  const rockMat = new THREE.MeshStandardMaterial({ color: theme.rock, roughness: 0.95 });
+  const rockMossMat = new THREE.MeshStandardMaterial({ color: 0x6a8a4a, roughness: 0.9 });
   crates = data.crates.map(c => ({ ...c, hit: false }));
   crates.forEach(c => {
     const cg = new THREE.Group();
-    const box = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.9, 1.1), crateMat);
-    cg.add(box);
-    // metal corner braces for definition
-    [-1, 1].forEach(sx => [-1, 1].forEach(sz => {
-      const brace = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.94, 0.08), braceMat);
-      brace.position.set(sx * 0.54, 0, sz * 0.54);
-      cg.add(brace);
-    }));
-    // horizontal metal strap around the middle
-    [-1, 1].forEach(sz => {
-      const strap = new THREE.Mesh(new THREE.BoxGeometry(1.14, 0.1, 0.08), braceMat);
-      strap.position.set(0, 0.1, sz * 0.54);
-      cg.add(strap);
+    // craggy boulder: irregular icosahedron, squashed so it reads as jump-over height
+    const boulder = new THREE.Mesh(new THREE.IcosahedronGeometry(0.62, 1), rockMat);
+    boulder.scale.set(1, 0.82, 0.92);
+    boulder.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
+    cg.add(boulder);
+    // smaller rocks clustered at the base for a natural pile
+    [[-0.42, -0.15, 0.28], [0.4, -0.2, -0.22], [0.05, -0.28, 0.4]].forEach(([x, y, z]) => {
+      const pebble = new THREE.Mesh(new THREE.IcosahedronGeometry(0.24, 0), rockMat);
+      pebble.position.set(x, y, z);
+      pebble.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, 0);
+      cg.add(pebble);
     });
+    const moss = new THREE.Mesh(new THREE.SphereGeometry(0.22, 8, 6, 0, Math.PI * 2, 0, Math.PI / 2), rockMossMat);
+    moss.position.set(0.1, 0.32, 0.2);
+    moss.rotation.x = -0.4;
+    cg.add(moss);
     cg.position.set(LANES_X[c.lane], 0.45, c.z);
     castAll(cg);
     scene.add(cg);
     c.mesh = cg;
   });
 
-  const stripeTex = makeWarningStripeTexture();
-  const barMat = new THREE.MeshStandardMaterial({ map: stripeTex, roughness: 0.5, metalness: 0.2 });
-  const postMat = new THREE.MeshStandardMaterial({ color: 0x2b2b2b, roughness: 0.4, metalness: 0.6 });
+  const rockHighlightMat = new THREE.MeshStandardMaterial({ color: 0xd8c8a0, roughness: 0.7 });
   bars = data.bars.map(b => ({ ...b, hit: false }));
   bars.forEach(b => {
-    const post1 = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 1.5, 8), postMat);
-    const post2 = post1.clone();
-    const beam = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.2, 0.2), barMat);
     const bg = new THREE.Group();
-    post1.position.set(-0.7, 0.75, 0);
-    post2.position.set(0.7, 0.75, 0);
-    beam.position.set(0, 1.45, 0);
-    bg.add(post1, post2, beam);
+    [-0.7, 0.7].forEach(x => {
+      const pillar = new THREE.Mesh(new THREE.IcosahedronGeometry(0.38, 0), rockMat);
+      pillar.scale.set(0.75, 1.9, 0.75);
+      pillar.position.set(x, 0.75, 0);
+      pillar.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, 0);
+      bg.add(pillar);
+    });
+    // low rock overhang/ledge - must slide under
+    const ledge = new THREE.Mesh(new THREE.IcosahedronGeometry(0.55, 1), rockMat);
+    ledge.scale.set(2.0, 0.5, 0.85);
+    ledge.position.set(0, 1.45, 0);
+    ledge.rotation.set(Math.random() * 0.3, Math.random() * Math.PI, Math.random() * 0.3);
+    bg.add(ledge);
+    // bright mineral vein along the underside so the duck-under cue stays visible
+    const vein = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.06, 0.12), rockHighlightMat);
+    vein.position.set(0, 1.22, 0.15);
+    bg.add(vein);
     bg.position.set(LANES_X[b.lane], 0, b.z);
     castAll(bg);
     scene.add(bg);
@@ -770,7 +987,7 @@ function buildLevel(levelNum) {
 
   rings = data.rings.map(([z, lane]) => ({ z, lane, collected: false }));
   rings.forEach(r => {
-    r.mesh = makeCoinMesh();
+    r.mesh = makeBananaMesh();
     r.mesh.position.set(LANES_X[r.lane], 0.9, r.z);
     scene.add(r.mesh);
   });
@@ -783,8 +1000,7 @@ function buildLevel(levelNum) {
   });
 
   if (bossMesh) { scene.remove(bossMesh); disposeObject(bossMesh); }
-  const palette = BOSS_PALETTES[(levelNum - 1) % BOSS_PALETTES.length];
-  bossMesh = buildBoss(theme.bossType, palette);
+  bossMesh = buildBoss(theme.bossType);
   bossMesh.position.set(0, 0, 250);
   scene.add(bossMesh);
 
@@ -1068,11 +1284,28 @@ function update(dt) {
   if (!boss.alive && player.z >= FINISH_Z && state === 'playing') { goToNextLevel(); return; }
 
   // sync meshes
-  const bob = player.onGround && !player.sliding ? Math.sin(player.runCycle) * 0.04 : 0;
+  const moving = player.onGround && !player.sliding;
+  const bob = moving ? Math.abs(Math.sin(player.runCycle)) * 0.09 : 0;
   playerMesh.position.set(player.x, player.y + bob, player.z);
-  const slideScale = player.sliding ? 0.5 : 1;
+  const slideScale = player.sliding ? 0.55 : 1;
   playerMesh.scale.y += (slideScale - playerMesh.scale.y) * Math.min(1, dt * 14);
+  const tiltTarget = player.sliding ? 0.85 : (!player.onGround ? -0.15 : 0);
+  playerMesh.rotation.x += (tiltTarget - playerMesh.rotation.x) * Math.min(1, dt * 12);
+  const { armL, armR, legL, legR } = playerMesh.userData;
+  if (moving) {
+    const swing = Math.sin(player.runCycle) * 0.85;
+    legL.rotation.x = swing; legR.rotation.x = -swing;
+    armL.rotation.x = -swing * 0.75; armR.rotation.x = swing * 0.75;
+  } else if (!player.onGround) {
+    legL.rotation.x = 1.1; legR.rotation.x = 0.75;
+    armL.rotation.x = -0.6; armR.rotation.x = -0.9;
+  } else {
+    legL.rotation.x = 0.3; legR.rotation.x = 0.5;
+    armL.rotation.x = -0.4; armR.rotation.x = -0.2;
+  }
   bossMesh.position.x = boss.x;
+  bossMesh.position.y = boss.engaged ? Math.sin(boss.laneTimer * 3) * 0.06 : 0;
+  bossMesh.rotation.z = boss.engaged ? Math.sin(boss.laneTimer * 3) * 0.03 : 0;
 
   // camera chase
   const camTargetX = player.x * 0.6;
