@@ -34,7 +34,7 @@ const SPEED_PER_LEVEL = 0.85;
 const MAX_FORWARD_SPEED = 24.5;
 const JUMP_V = 11.4;
 const GRAVITY = 26;
-const CRATE_HEIGHT = 0.9;
+const CRATE_HEIGHT = 1.06;  // matches the treasure chest's actual mesh height (1.10)
 const SLIDE_DURATION = 0.55;
 const HIT_RANGE = 1.1;
 // forgiveness: collectibles reach further than hazards, so near-misses still reward
@@ -94,10 +94,13 @@ const sfx = {
   cookie: () => { [523, 659, 784, 1046].forEach((f, i) => tone(f, 0.16, 'sine', 0.13, i * 0.06)); },
   sticker: () => { [659, 880, 1046, 1318, 1568].forEach((f, i) => tone(f, 0.2, 'triangle', 0.13, i * 0.055)); },
   shatter: () => {
-    noiseBurst(0.14, 0.26); noiseBurst(0.1, 0.2);
-    tone(90, 0.16, 'square', 0.12, 0.02, 1400);
-    tone(1800, 0.07, 'square', 0.08, 0.1, 220);
-    tone(140, 0.2, 'sawtooth', 0.1, 0.18, 60);
+    // sharp crack, then a scatter of high tinkling fragments
+    noiseBurst(0.05, 0.2);
+    tone(2600, 0.07, 'triangle', 0.11, 0, 1700);
+    [0, 0.05, 0.09, 0.14, 0.2, 0.27, 0.34].forEach((d, i) => {
+      tone(1500 + Math.random() * 1700, 0.16, 'sine', 0.075 - i * 0.006, d);
+    });
+    noiseBurst(0.22, 0.07);
   },
   kick: () => { noiseBurst(0.1, 0.1); tone(420, 0.13, 'triangle', 0.1, 0, 780); },
   smash: () => { noiseBurst(0.26, 0.26); tone(140, 0.28, 'sawtooth', 0.16, 0, 55); },
@@ -1351,36 +1354,36 @@ function makeCookieMesh() {
 // ---------- collectible stickers (the sticker book) ----------
 // Two per chamber, derived from the level index so the book fills in order.
 const STICKERS = [
-  { id: 'rocket',   emoji: '\u{1F680}', name: 'Rocket',      bg: '#ffd9e6' },
-  { id: 'saturn',   emoji: '\u{1FA90}', name: 'Ringed Planet', bg: '#dde4ff' },
-  { id: 'racecar',  emoji: '\u{1F697}', name: 'Race Car',    bg: '#ffe0d0' },
-  { id: 'trex',     emoji: '\u{1F996}', name: 'T-Rex',       bg: '#d8f5d8' },
-  { id: 'cake',     emoji: '\u{1F382}', name: 'Birthday Cake', bg: '#ffe6f2' },
-  { id: 'rainbow',  emoji: '\u{1F308}', name: 'Rainbow',     bg: '#e6f7ff' },
-  { id: 'icecream', emoji: '\u{1F366}', name: 'Ice Cream',   bg: '#fff0dc' },
-  { id: 'soccer',   emoji: '\u{26BD}',  name: 'Soccer Ball', bg: '#eef2f5' },
-  { id: 'dino',     emoji: '\u{1F995}', name: 'Longneck',    bg: '#e2f0d9' },
-  { id: 'balloon',  emoji: '\u{1F388}', name: 'Balloon',     bg: '#ffe3e3' },
-  { id: 'train',    emoji: '\u{1F682}', name: 'Steam Train', bg: '#e8e2d6' },
-  { id: 'octopus',  emoji: '\u{1F419}', name: 'Octopus',     bg: '#ffe0ee' },
-  { id: 'butterfly',emoji: '\u{1F98B}', name: 'Butterfly',   bg: '#f0e6ff' },
-  { id: 'donut',    emoji: '\u{1F369}', name: 'Donut',       bg: '#ffeadd' },
-  { id: 'star',     emoji: '\u{2B50}',  name: 'Gold Star',   bg: '#fff6d0' },
-  { id: 'dolphin',  emoji: '\u{1F42C}', name: 'Dolphin',     bg: '#dff0ff' },
-  { id: 'pizza',    emoji: '\u{1F355}', name: 'Pizza Slice', bg: '#ffe8cc' },
-  { id: 'turtle',   emoji: '\u{1F422}', name: 'Turtle',      bg: '#ddf3e2' },
-  { id: 'guitar',   emoji: '\u{1F3B8}', name: 'Guitar',      bg: '#ffe4c9' },
-  { id: 'lion',     emoji: '\u{1F981}', name: 'Lion',        bg: '#ffeec2' },
-  { id: 'digger',   emoji: '\u{1F69C}', name: 'Digger',      bg: '#fff0c0' },
-  { id: 'ufo',      emoji: '\u{1F6F8}', name: 'Flying Saucer', bg: '#e0ffe9' },
-  { id: 'crab',     emoji: '\u{1F980}', name: 'Crab',        bg: '#ffe0dc' },
-  { id: 'kite',     emoji: '\u{1FA81}', name: 'Kite',        bg: '#e4f0ff' },
-  { id: 'monkey',   emoji: '\u{1F435}', name: 'Monkey',      bg: '#f6e6d2' },
-  { id: 'fireeng',  emoji: '\u{1F692}', name: 'Fire Engine', bg: '#ffdede' },
-  { id: 'penguin',  emoji: '\u{1F427}', name: 'Penguin',     bg: '#e6f4ff' },
-  { id: 'cupcake',  emoji: '\u{1F9C1}', name: 'Cupcake',     bg: '#ffe8f4' },
-  { id: 'whale',    emoji: '\u{1F433}', name: 'Whale',       bg: '#dceeff' },
-  { id: 'trophy',   emoji: '\u{1F3C6}', name: 'Golden Trophy', bg: '#fff3c4' },
+  { id: 'rocket',   emoji: '\u{1F680}', name: 'Rocket',      bg: '#f2568f' },
+  { id: 'saturn',   emoji: '\u{1FA90}', name: 'Ringed Planet', bg: '#5b6ff0' },
+  { id: 'racecar',  emoji: '\u{1F697}', name: 'Race Car',    bg: '#f2622e' },
+  { id: 'trex',     emoji: '\u{1F996}', name: 'T-Rex',       bg: '#3aa84a' },
+  { id: 'cake',     emoji: '\u{1F382}', name: 'Birthday Cake', bg: '#f04a92' },
+  { id: 'rainbow',  emoji: '\u{1F308}', name: 'Rainbow',     bg: '#22a7d8' },
+  { id: 'icecream', emoji: '\u{1F366}', name: 'Ice Cream',   bg: '#f09a2e' },
+  { id: 'soccer',   emoji: '\u{26BD}',  name: 'Soccer Ball', bg: '#5a6470' },
+  { id: 'dino',     emoji: '\u{1F995}', name: 'Longneck',    bg: '#5fa83a' },
+  { id: 'balloon',  emoji: '\u{1F388}', name: 'Balloon',     bg: '#e8434f' },
+  { id: 'train',    emoji: '\u{1F682}', name: 'Steam Train', bg: '#8a6a3a' },
+  { id: 'octopus',  emoji: '\u{1F419}', name: 'Octopus',     bg: '#e0508e' },
+  { id: 'butterfly',emoji: '\u{1F98B}', name: 'Butterfly',   bg: '#8a5ad8' },
+  { id: 'donut',    emoji: '\u{1F369}', name: 'Donut',       bg: '#f0803a' },
+  { id: 'star',     emoji: '\u{2B50}',  name: 'Gold Star',   bg: '#e8b21e' },
+  { id: 'dolphin',  emoji: '\u{1F42C}', name: 'Dolphin',     bg: '#2f92d8' },
+  { id: 'pizza',    emoji: '\u{1F355}', name: 'Pizza Slice', bg: '#e07a22' },
+  { id: 'turtle',   emoji: '\u{1F422}', name: 'Turtle',      bg: '#3f9a6a' },
+  { id: 'guitar',   emoji: '\u{1F3B8}', name: 'Guitar',      bg: '#d2762a' },
+  { id: 'lion',     emoji: '\u{1F981}', name: 'Lion',        bg: '#e8a020' },
+  { id: 'digger',   emoji: '\u{1F69C}', name: 'Digger',      bg: '#e0aa1e' },
+  { id: 'ufo',      emoji: '\u{1F6F8}', name: 'Flying Saucer', bg: '#2fae86' },
+  { id: 'crab',     emoji: '\u{1F980}', name: 'Crab',        bg: '#e8503a' },
+  { id: 'kite',     emoji: '\u{1FA81}', name: 'Kite',        bg: '#3f86d8' },
+  { id: 'monkey',   emoji: '\u{1F435}', name: 'Monkey',      bg: '#a5763f' },
+  { id: 'fireeng',  emoji: '\u{1F692}', name: 'Fire Engine', bg: '#e03a3a' },
+  { id: 'penguin',  emoji: '\u{1F427}', name: 'Penguin',     bg: '#3c7ba8' },
+  { id: 'cupcake',  emoji: '\u{1F9C1}', name: 'Cupcake',     bg: '#ee5f9e' },
+  { id: 'whale',    emoji: '\u{1F433}', name: 'Whale',       bg: '#3877c4' },
+  { id: 'trophy',   emoji: '\u{1F3C6}', name: 'Golden Trophy', bg: '#e0a81e' },
 ];
 
 // which two stickers live in a given chamber
@@ -1406,24 +1409,51 @@ let stickerBook = loadStickerBook();
 const stickerTexCache = {};
 function makeStickerTexture(def) {
   if (stickerTexCache[def.id]) return stickerTexCache[def.id];
+  const S = 256;
   const c = document.createElement('canvas');
-  c.width = 128; c.height = 128;
-  const ctx = c.getContext('2d');
-  // rounded pastel card
-  const r = 24;
-  ctx.fillStyle = def.bg;
-  ctx.beginPath();
-  ctx.moveTo(r, 0); ctx.lineTo(128 - r, 0); ctx.quadraticCurveTo(128, 0, 128, r);
-  ctx.lineTo(128, 128 - r); ctx.quadraticCurveTo(128, 128, 128 - r, 128);
-  ctx.lineTo(r, 128); ctx.quadraticCurveTo(0, 128, 0, 128 - r);
-  ctx.lineTo(0, r); ctx.quadraticCurveTo(0, 0, r, 0);
-  ctx.fill();
-  ctx.font = '86px -apple-system, "Apple Color Emoji", "Segoe UI Emoji", sans-serif';
+  c.width = S; c.height = S;
+  const ctx = c.getContext('2d', { willReadFrequently: true });
+  const roundRect = (x, y, w, h, r, fill) => {
+    ctx.fillStyle = fill;
+    ctx.beginPath();
+    ctx.moveTo(x + r, y); ctx.lineTo(x + w - r, y); ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r); ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h); ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r); ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.fill();
+  };
+  // saturated frame + white centre: the icon needs maximum contrast to read
+  // from down the corridor
+  roundRect(0, 0, S, S, 46, def.bg);
+  roundRect(22, 22, S - 44, S - 44, 30, '#ffffff');
+
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText(def.emoji, 64, 70);
+  ctx.font = '170px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", -apple-system, sans-serif';
+  ctx.fillText(def.emoji, S / 2, S / 2 + 8);
+
+  // Not every platform has a colour emoji font. If the middle of the card is
+  // still the background colour, fall back to a bold initial so the sticker is
+  // never a blank card.
+  let drew = false;
+  try {
+    const probe = ctx.getImageData(S * 0.32, S * 0.32, S * 0.36, S * 0.36).data;
+    const bg = ctx.getImageData(S / 2, 30, 1, 1).data;   // sample the white centre
+    for (let i = 0; i < probe.length; i += 16) {
+      if (Math.abs(probe[i] - bg[0]) > 18 || Math.abs(probe[i + 1] - bg[1]) > 18 || Math.abs(probe[i + 2] - bg[2]) > 18) {
+        drew = true; break;
+      }
+    }
+  } catch (e) { drew = true; }   // tainted canvas: assume it worked
+  if (!drew) {
+    ctx.fillStyle = def.bg;
+    ctx.font = '900 150px -apple-system, "Segoe UI", sans-serif';
+    ctx.fillText(def.name[0].toUpperCase(), S / 2, S / 2 + 6);
+  }
+
   const tex = new THREE.CanvasTexture(c);
   tex.colorSpace = THREE.SRGBColorSpace;
+  tex.anisotropy = 4;
   stickerTexCache[def.id] = tex;
   return tex;
 }
@@ -1434,24 +1464,24 @@ const stickerBackMat = new THREE.MeshStandardMaterial({
 function makeStickerMesh(def) {
   const g = new THREE.Group();
   // white die-cut backing, slightly larger than the art
-  const back = new THREE.Mesh(new THREE.BoxGeometry(0.92, 0.92, 0.08), stickerBackMat);
+  const back = new THREE.Mesh(new THREE.BoxGeometry(1.32, 1.32, 0.09), stickerBackMat);
   g.add(back);
   const faceMat = new THREE.MeshStandardMaterial({
     map: makeStickerTexture(def), roughness: 0.4,
-    emissive: 0xffffff, emissiveIntensity: 0.22,
+    emissive: 0xffffff, emissiveIntensity: 0.3,
   });
-  [0.05, -0.05].forEach((z, i) => {
-    const face = new THREE.Mesh(new THREE.PlaneGeometry(0.8, 0.8), faceMat);
+  [0.055, -0.055].forEach((z, i) => {
+    const face = new THREE.Mesh(new THREE.PlaneGeometry(1.18, 1.18), faceMat);
     face.position.z = z;
     if (i === 1) face.rotation.y = Math.PI;
     g.add(face);
   });
   // soft halo so it stands out as a prize
   const halo = new THREE.Mesh(
-    new THREE.SphereGeometry(0.78, 14, 12),
-    new THREE.MeshBasicMaterial({ color: 0xfff0b0, transparent: true, opacity: 0.14 }),
+    new THREE.SphereGeometry(1.05, 14, 12),
+    new THREE.MeshBasicMaterial({ color: 0xfff0b0, transparent: true, opacity: 0.16 }),
   );
-  halo.scale.set(1, 1, 0.45);
+  halo.scale.set(1, 1, 0.4);
   g.add(halo);
   g.userData.def = def;
   return g;
@@ -1517,83 +1547,97 @@ const URN_BODY_DARK = 0x14424f;
 const URN_GOLD = 0xe8b44a;
 const URN_CRACK = 0xffb85c;
 
-// pottery profile for LatheGeometry - gives a real thrown-pot silhouette
-function urnProfile(h, r) {
-  return [
-    new THREE.Vector2(0.0, 0),
-    new THREE.Vector2(r * 0.55, 0),
-    new THREE.Vector2(r * 0.9, h * 0.18),
-    new THREE.Vector2(r, h * 0.45),
-    new THREE.Vector2(r * 0.78, h * 0.78),
-    new THREE.Vector2(r * 0.58, h * 0.9),
-    new THREE.Vector2(r * 0.7, h),
-  ];
-}
-
-// JUMP or KICK: a stack of cracked ceramic urns, obviously smashable
+// JUMP or KICK: a banded treasure chest, lid ajar with gold light spilling out.
+// Bigger and squarer than a pot, so it reads as a solid thing to clear, and
+// obviously full of something worth kicking open.
 function makeUrnStack() {
   const g = new THREE.Group();
-  const bodyMat = new THREE.MeshStandardMaterial({
-    color: URN_BODY, roughness: 0.4, metalness: 0.12,
-    emissive: 0x0e3a46, emissiveIntensity: 0.75,
-  });
-  const darkMat = new THREE.MeshStandardMaterial({ color: URN_BODY_DARK, roughness: 0.5 });
+  const woodMat = new THREE.MeshStandardMaterial({ color: 0x6b3a1e, roughness: 0.72 });
+  const woodDarkMat = new THREE.MeshStandardMaterial({ color: 0x4a2612, roughness: 0.8 });
+  const ironMat = new THREE.MeshStandardMaterial({ color: 0x2a2420, roughness: 0.5, metalness: 0.65 });
   const goldMat = new THREE.MeshStandardMaterial({
-    color: URN_GOLD, roughness: 0.3, metalness: 0.8,
-    emissive: URN_GOLD, emissiveIntensity: 0.22,
+    color: URN_GOLD, roughness: 0.26, metalness: 0.85,
+    emissive: URN_GOLD, emissiveIntensity: 0.3,
   });
-  const crackMat = new THREE.MeshStandardMaterial({
-    color: URN_CRACK, emissive: URN_CRACK, emissiveIntensity: 1.3,
+  const glowMat = new THREE.MeshStandardMaterial({
+    color: 0xffe08a, emissive: 0xffc040, emissiveIntensity: 2.4,
+    transparent: true, opacity: 0.92,
   });
 
-  function urn(h, r, y, s) {
-    const u = new THREE.Group();
-    const body = new THREE.Mesh(new THREE.LatheGeometry(urnProfile(h, r), 16), bodyMat);
-    u.add(body);
-    // painted bands
-    [h * 0.32, h * 0.62].forEach(by => {
-      const band = new THREE.Mesh(new THREE.TorusGeometry(r * 0.97, 0.022, 6, 18), goldMat);
-      band.position.y = by;
-      band.rotation.x = Math.PI / 2;
-      u.add(band);
-    });
-    // rim
-    const rim = new THREE.Mesh(new THREE.TorusGeometry(r * 0.7, 0.03, 6, 18), goldMat);
-    rim.position.y = h;
-    rim.rotation.x = Math.PI / 2;
-    u.add(rim);
-    // shadowed inner mouth
-    const mouth = new THREE.Mesh(new THREE.CircleGeometry(r * 0.66, 16), darkMat);
-    mouth.rotation.x = -Math.PI / 2;
-    mouth.position.y = h - 0.008;
-    u.add(mouth);
-    // hairline cracks, faintly lit so "breakable" reads at a glance
-    for (let i = 0; i < 3; i++) {
-      const ang = (i / 3) * Math.PI * 2 + 0.6;
-      const crack = new THREE.Mesh(new THREE.BoxGeometry(0.026, h * 0.55, 0.026), crackMat);
-      crack.position.set(Math.cos(ang) * r * 0.95, h * 0.45, Math.sin(ang) * r * 0.95);
-      crack.rotation.z = (i - 1) * 0.22;
-      u.add(crack);
-    }
-    u.position.y = y;
-    u.scale.setScalar(s);
-    return u;
+  const W = 1.16, D = 0.82, BODY_H = 0.5;
+
+  // --- body, with vertical plank grooves
+  const body = new THREE.Mesh(new THREE.BoxGeometry(W, BODY_H, D), woodMat);
+  body.position.y = BODY_H / 2;
+  g.add(body);
+  for (let i = -2; i <= 2; i++) {
+    const groove = new THREE.Mesh(new THREE.BoxGeometry(0.025, BODY_H * 0.92, D + 0.01), woodDarkMat);
+    groove.position.set(i * 0.21, BODY_H / 2, 0);
+    g.add(groove);
   }
-
-  g.add(urn(0.56, 0.35, 0, 1));        // wide base pot
-  // narrow collar so the upper pot reads as a separate object
-  const collar = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.2, 0.07, 12), darkMat);
-  collar.position.y = 0.57;
-  g.add(collar);
-  g.add(urn(0.5, 0.26, 0.61, 0.62));   // smaller pot balanced on top
-  // a couple of loose shards at the base
-  [[-0.4, 0.2], [0.42, -0.16]].forEach(([x, z]) => {
-    const shard = new THREE.Mesh(new THREE.ConeGeometry(0.09, 0.16, 4), darkMat);
-    shard.position.set(x, 0.07, z);
-    shard.rotation.set(0.3, Math.random() * 3, 0.4);
-    g.add(shard);
+  // iron bands wrapping the body
+  [-0.36, 0.36].forEach(x => {
+    const band = new THREE.Mesh(new THREE.BoxGeometry(0.09, BODY_H + 0.02, D + 0.03), ironMat);
+    band.position.set(x, BODY_H / 2, 0);
+    g.add(band);
   });
+  // corner studs
+  [-1, 1].forEach(sx => [-1, 1].forEach(sz => {
+    const stud = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 6), ironMat);
+    stud.position.set(sx * (W / 2 - 0.05), BODY_H - 0.07, sz * (D / 2 - 0.05));
+    g.add(stud);
+  }));
+
+  // --- lid: half-cylinder, tipped back so the chest sits open
+  const lid = new THREE.Group();
+  const lidShell = new THREE.Mesh(
+    new THREE.CylinderGeometry(D / 2, D / 2, W, 14, 1, false, 0, Math.PI),
+    woodMat,
+  );
+  lidShell.rotation.z = Math.PI / 2;
+  lid.add(lidShell);
+  [-0.36, 0.36].forEach(x => {
+    const lidBand = new THREE.Mesh(
+      new THREE.CylinderGeometry(D / 2 + 0.012, D / 2 + 0.012, 0.09, 14, 1, false, 0, Math.PI),
+      ironMat,
+    );
+    lidBand.rotation.z = Math.PI / 2;
+    lidBand.position.x = x;
+    lid.add(lidBand);
+  });
+  lid.position.set(0, BODY_H, 0.06);
+  lid.rotation.x = 0.72;           // hinges backwards so the open side faces the runner
+  g.add(lid);
+
+  // --- treasure glow spilling from the gap
+  const glow = new THREE.Mesh(new THREE.BoxGeometry(W - 0.16, 0.07, D - 0.24), glowMat);
+  glow.position.set(0, BODY_H - 0.01, -0.06);
+  g.add(glow);
+  // a few coins cresting the rim
+  for (let i = 0; i < 7; i++) {
+    const coin = new THREE.Mesh(new THREE.CylinderGeometry(0.082, 0.082, 0.03, 12), goldMat);
+    coin.position.set(-0.38 + i * 0.128, BODY_H + 0.03 + (i % 3) * 0.03, -0.16 + (i % 2) * 0.09);
+    coin.rotation.set(Math.random() * 0.6, Math.random() * 2, Math.random() * 0.6);
+    g.add(coin);
+  }
+  // a gem sitting proud of the pile
+  const gem = new THREE.Mesh(new THREE.OctahedronGeometry(0.1, 0), new THREE.MeshStandardMaterial({
+    color: 0x46d8e8, emissive: 0x2aa8c0, emissiveIntensity: 1.4, roughness: 0.2, metalness: 0.4,
+  }));
+  gem.position.set(0.16, BODY_H + 0.1, -0.14);
+  g.add(gem);
+
+  // --- gold lock plate on the front
+  const plate = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.28, 0.05), goldMat);
+  plate.position.set(0, BODY_H - 0.15, -(D / 2 + 0.01));
+  g.add(plate);
+  const keyhole = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.04, 10), ironMat);
+  keyhole.rotation.x = Math.PI / 2;
+  keyhole.position.set(0, BODY_H - 0.13, -(D / 2 + 0.04));
+  g.add(keyhole);
+
   g.userData.phase = Math.random() * Math.PI * 2;
+  g.userData.glow = glow;
   return g;
 }
 
@@ -1740,7 +1784,7 @@ function buildLevel(levelNum) {
   }));
   stickerPickups.forEach(s => {
     s.mesh = makeStickerMesh(s.def);
-    s.mesh.position.set(LANES_X[s.lane], 1.25, s.z);
+    s.mesh.position.set(LANES_X[s.lane], 1.35, s.z);
     castAll(s.mesh);
     scene.add(s.mesh);
   });
@@ -1756,64 +1800,54 @@ function buildLevel(levelNum) {
   exitFillEl.style.width = '0%';
 }
 
-// Chamber transition: a digital glitch across the frame. Grabs the current
-// rendered frame, slices it into horizontal bands and jitters them sideways
-// with an RGB split, plus static and scanlines. Falls back to plain colour
-// bands if the canvas can't be read.
+// Chamber transition: a pane of clear blue glass cracks and falls apart.
+// Deliberately transparent - the game stays visible through it. Shards are
+// built as radial clip-path polygons from an impact point: an inner ring of
+// triangles and an outer ring of quads, the way real impact glass breaks.
 function playShatter() {
-  let shot = null;
-  try {
-    // capture must happen immediately after a render in the same task
-    renderer.render(scene, camera);
-    shot = renderer.domElement.toDataURL('image/jpeg', 0.55);
-    if (!shot || shot.length < 512) shot = null;
-  } catch (e) { shot = null; }
+  const SECTORS = 16;
+  const cx = 46 + Math.random() * 8;   // impact point, roughly centre screen
+  const cy = 40 + Math.random() * 8;
+  const pt = (a, r) => `${(cx + Math.cos(a) * r).toFixed(2)}% ${(cy + Math.sin(a) * r * 1.25).toFixed(2)}%`;
 
-  const W = shatterEl.clientWidth || window.innerWidth;
-  const H = shatterEl.clientHeight || window.innerHeight;
-  const SLICES = 16;
-  const sliceH = H / SLICES;
+  // jittered spoke angles + a jagged inner crack ring
+  const angs = [];
+  for (let i = 0; i < SECTORS; i++) {
+    angs.push((i / SECTORS) * Math.PI * 2 + (Math.random() - 0.5) * 0.16);
+  }
+  const inner = angs.map(() => 17 + Math.random() * 13);
 
   shatterEl.innerHTML = '';
-  for (let i = 0; i < SLICES; i++) {
-    const band = document.createElement('div');
-    band.className = 'gband';
-    band.style.top = `${i * sliceH}px`;
-    band.style.height = `${sliceH + 1}px`;
-    if (shot) {
-      band.style.backgroundImage = `url(${shot})`;
-      band.style.backgroundSize = `${W}px ${H}px`;
-      band.style.backgroundPosition = `0px ${-i * sliceH}px`;
-    } else {
-      band.style.background = i % 2 ? 'rgba(180,200,215,.5)' : 'rgba(40,60,80,.55)';
-    }
-    // sideways kick, alternating direction, biggest near the middle
-    const centreBias = 1 - Math.abs(i / (SLICES - 1) - 0.5) * 1.4;
-    const dir = i % 2 ? 1 : -1;
-    band.style.setProperty('--gx', `${dir * (10 + Math.random() * 70) * centreBias}px`);
-    band.style.setProperty('--gx2', `${-dir * (6 + Math.random() * 40) * centreBias}px`);
-    band.style.setProperty('--gdelay', `${Math.random() * 90}ms`);
-    // a few bands get an inverted / colour-shifted stutter
-    if (Math.random() < 0.28) band.classList.add('gband-hot');
-    shatterEl.appendChild(band);
-  }
+  const addShard = (points, delay, dist, spin) => {
+    const s = document.createElement('div');
+    s.className = 'glass-shard';
+    s.style.clipPath = `polygon(${points.join(', ')})`;
+    s.style.setProperty('--gd', `${delay}ms`);
+    s.style.setProperty('--gtx', `${dist.x.toFixed(1)}px`);
+    s.style.setProperty('--gty', `${dist.y.toFixed(1)}px`);
+    s.style.setProperty('--grot', `${spin.toFixed(1)}deg`);
+    shatterEl.appendChild(s);
+  };
 
-  // RGB split ghosts of the whole frame
-  if (shot) {
-    ['gr', 'gb'].forEach(cls => {
-      const ghost = document.createElement('div');
-      ghost.className = `gghost ${cls}`;
-      ghost.style.backgroundImage = `url(${shot})`;
-      ghost.style.backgroundSize = `${W}px ${H}px`;
-      shatterEl.appendChild(ghost);
-    });
+  for (let i = 0; i < SECTORS; i++) {
+    const a = angs[i], b = angs[(i + 1) % SECTORS];
+    const ri = inner[i], rj = inner[(i + 1) % SECTORS];
+    const mid = a + (b - a) / 2;
+    // inner triangle - falls first, close to the impact
+    addShard(
+      [`${cx}% ${cy}%`, pt(a, ri), pt(b, rj)],
+      40 + Math.random() * 70,
+      { x: Math.cos(mid) * (70 + Math.random() * 70), y: Math.sin(mid) * 50 + 240 + Math.random() * 120 },
+      (Math.random() - 0.5) * 150,
+    );
+    // outer piece - drifts further and tumbles more
+    addShard(
+      [pt(a, ri), pt(a, 95), pt(b, 95), pt(b, rj)],
+      110 + Math.random() * 130,
+      { x: Math.cos(mid) * (110 + Math.random() * 120), y: Math.sin(mid) * 60 + 300 + Math.random() * 180 },
+      (Math.random() - 0.5) * 220,
+    );
   }
-  const noise = document.createElement('div');
-  noise.className = 'gnoise';
-  shatterEl.appendChild(noise);
-  const scan = document.createElement('div');
-  scan.className = 'gscan';
-  shatterEl.appendChild(scan);
 
   shatterEl.classList.remove('hidden');
   flashEl.classList.remove('hidden');
@@ -1826,7 +1860,7 @@ function playShatter() {
     shatterEl.classList.add('hidden');
     flashEl.classList.add('hidden');
     shatterEl.innerHTML = '';
-  }, 780);
+  }, 1150);
 }
 
 function showLevelBanner(levelNum) {
@@ -1980,8 +2014,9 @@ function update(dt) {
   // crate collisions (must jump; pass-through damage, no wall-blocking)
   crates.forEach(c => {
     if (c.hit) return;
-    const ut = performance.now() * 0.0022 + c.mesh.userData.phase;
-    c.mesh.rotation.z = Math.sin(ut) * 0.022;
+    const ut = performance.now() * 0.0026 + c.mesh.userData.phase;
+    c.mesh.userData.glow.material.emissiveIntensity = 2.1 + Math.sin(ut) * 0.7;
+    c.mesh.rotation.z = Math.sin(ut * 0.5) * 0.012;
     const sameLane = player.laneIndex === c.lane;
     // spin kick shatters the boulder before it can land a hit
     if (player.kicking && sameLane && rectClose(player.z, c.z, KICK_RANGE)) {
@@ -1989,8 +2024,8 @@ function update(dt) {
       c.mesh.visible = false;
       score += 25; scoreEl.textContent = score;
       camShake = 0.28;
-      spawnSparkles(c.mesh.position.x, 0.55, c.mesh.position.z, 18, 0x1d4d5c, 0.35);
-      spawnSparkles(c.mesh.position.x, 0.4, c.mesh.position.z, 10, 0xe8b44a, 0.9);
+      spawnSparkles(c.mesh.position.x, 0.6, c.mesh.position.z, 20, 0xe8b44a, 1.4);
+      spawnSparkles(c.mesh.position.x, 0.35, c.mesh.position.z, 10, 0x6b3a1e, 0.2);
       sfx.smash();
       return;
     }
@@ -2089,14 +2124,14 @@ function update(dt) {
     if (s.collected) return;
     // rock gently rather than spin - a full spin hides the art half the time
     const st = performance.now() * 0.0022 + s.z;
-    s.mesh.rotation.y = Math.sin(st) * 0.6;
+    s.mesh.rotation.y = Math.sin(st) * 0.34;
     s.mesh.rotation.z = Math.cos(st * 0.8) * 0.12;
-    s.mesh.position.y = 1.25 + Math.sin(st * 1.4) * 0.12;
+    s.mesh.position.y = 1.35 + Math.sin(st * 1.4) * 0.12;
     const sameLane = player.laneIndex === s.lane;
     if (sameLane && Math.abs(s.z - player.z) < MAGNET_RANGE) {
       const pull = Math.min(1, dt * 6);
       s.mesh.position.x += (player.x - s.mesh.position.x) * pull;
-      s.mesh.rotation.y = Math.sin(st * 4) * 0.5;
+      s.mesh.rotation.y = Math.sin(st * 4) * 0.3;
     }
     if (sameLane && rectClose(player.z, s.z, PICKUP_RANGE)) {
       s.collected = true; s.mesh.visible = false;

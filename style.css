@@ -417,100 +417,49 @@ html, body {
   filter: none;
 }
 
-/* ---- glitch transition ---- */
+/* ---- glass shatter transition ---- */
 #shatter {
   position: absolute;
   inset: 0;
   z-index: 9;
   pointer-events: none;
   overflow: hidden;
-  background: #05070a;
+  /* faint blue wash so a pane of glass reads as being there at all */
+  background: linear-gradient(160deg, rgba(150, 210, 245, .16), rgba(90, 160, 210, .10));
+  animation: glass-pane 1150ms ease-out both;
 }
 #shatter.hidden { display: none; }
-
-/* horizontal slice of the captured frame, kicked sideways then snapped back */
-#shatter .gband {
-  position: absolute;
-  left: 0;
-  width: 100%;
-  background-repeat: no-repeat;
-  will-change: transform, opacity, filter;
-  animation: gband-jit 780ms steps(1, end) var(--gdelay, 0ms) both;
-}
-@keyframes gband-jit {
-  0%   { transform: translateX(0); }
-  10%  { transform: translateX(var(--gx)); }
-  22%  { transform: translateX(var(--gx2)); }
-  34%  { transform: translateX(calc(var(--gx) * .6)); }
-  46%  { transform: translateX(calc(var(--gx2) * .45)); opacity: .9; }
-  58%  { transform: translateX(calc(var(--gx) * .3)); }
-  72%  { transform: translateX(0); opacity: .75; }
-  100% { transform: translateX(0); opacity: 0; }
-}
-/* a minority of bands stutter in inverted / shifted colour */
-#shatter .gband-hot {
-  animation: gband-jit 780ms steps(1, end) var(--gdelay, 0ms) both,
-             gband-hue 780ms steps(1, end) var(--gdelay, 0ms) both;
-}
-@keyframes gband-hue {
-  0%, 12%  { filter: none; }
-  13%, 24% { filter: invert(1) hue-rotate(90deg) saturate(2); }
-  25%, 40% { filter: hue-rotate(-60deg) saturate(2.5) brightness(1.3); }
-  41%, 60% { filter: none; }
-  61%, 70% { filter: invert(1) brightness(1.4); }
-  71%, 100%{ filter: none; }
+@keyframes glass-pane {
+  0%   { opacity: 1; }
+  55%  { opacity: .5; }
+  100% { opacity: 0; }
 }
 
-/* chromatic aberration ghosts of the whole frame */
-#shatter .gghost {
-  position: absolute;
-  inset: 0;
-  background-repeat: no-repeat;
-  mix-blend-mode: screen;
-  will-change: transform, opacity;
-  animation: gghost-slide 780ms ease-out both;
-}
-#shatter .gr { filter: sepia(1) hue-rotate(-40deg) saturate(3.4); }
-#shatter .gb { filter: sepia(1) hue-rotate(150deg) saturate(3.4); }
-@keyframes gghost-slide {
-  0%   { transform: translateX(0); opacity: .0; }
-  12%  { transform: translateX(-15px); opacity: .38; }
-  30%  { transform: translateX(13px); opacity: .32; }
-  55%  { transform: translateX(-6px); opacity: .2; }
-  100% { transform: translateX(0); opacity: 0; }
-}
-
-/* rolling static */
-#shatter .gnoise {
-  position: absolute;
-  inset: -20%;
-  opacity: .3;
-  mix-blend-mode: overlay;
-  background-image: repeating-conic-gradient(#fff 0% 0.0006%, #000 0.0006% 0.0012%);
-  background-size: 3px 3px;
-  animation: gnoise-roll 780ms steps(6, end) both;
-}
-@keyframes gnoise-roll {
-  0%   { transform: translate(0, 0); opacity: .34; }
-  25%  { transform: translate(-4%, 3%); }
-  50%  { transform: translate(3%, -2%); opacity: .26; }
-  75%  { transform: translate(-2%, 4%); }
-  100% { transform: translate(0, 0); opacity: 0; }
-}
-
-/* scanlines + a bright roll bar sweeping down */
-#shatter .gscan {
+/* each shard is the full pane clipped to one polygon */
+#shatter .glass-shard {
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(rgba(255,255,255,.5), rgba(255,255,255,0) 42%) no-repeat,
-    repeating-linear-gradient(rgba(0,0,0,.32) 0 1px, rgba(0,0,0,0) 1px 3px);
-  background-size: 100% 26%, 100% 100%;
-  animation: gscan-roll 780ms linear both;
+    linear-gradient(135deg,
+      rgba(226, 248, 255, .62) 0%,
+      rgba(110, 196, 245, .30) 32%,
+      rgba(186, 232, 255, .42) 56%,
+      rgba(78, 172, 232, .26) 100%);
+  /* bright bevelled edges read as the crack lines before the pane lets go */
+  filter: drop-shadow(0 0 1px rgba(255, 255, 255, .95))
+          drop-shadow(0 0 5px rgba(150, 215, 255, .55));
+  will-change: transform, opacity;
+  animation: glass-fall 1150ms cubic-bezier(.3, .05, .6, 1) var(--gd, 0ms) both;
 }
-@keyframes gscan-roll {
-  0%   { background-position: 0 -30%, 0 0; opacity: .85; }
-  100% { background-position: 0 130%, 0 0; opacity: 0; }
+@keyframes glass-fall {
+  /* hold in place: this is the "cracked but still standing" beat */
+  0%,  16% { transform: translate(0, 0) rotate(0deg); opacity: 1; }
+  /* a tiny lurch as it lets go */
+  24%      { transform: translate(calc(var(--gtx) * .05), -6px) rotate(calc(var(--grot) * .04)); opacity: 1; }
+  100%     {
+    transform: translate(var(--gtx), var(--gty)) rotate(var(--grot));
+    opacity: 0;
+  }
 }
 
 #flash {
@@ -518,16 +467,14 @@ html, body {
   inset: 0;
   z-index: 9;
   pointer-events: none;
-  background: #fff;
-  animation: flash-out 460ms ease-out forwards;
+  background: radial-gradient(circle at 50% 44%, rgba(255,255,255,.95), rgba(180,225,255,.35) 45%, rgba(255,255,255,0) 72%);
+  animation: flash-out 420ms ease-out forwards;
 }
 #flash.hidden { display: none; }
 @keyframes flash-out {
-  0%   { opacity: .95; }
-  14%  { opacity: 0; }
-  20%  { opacity: .5; }
-  30%  { opacity: 0; }
-  100% { opacity: 0; }
+  0%   { opacity: .9; transform: scale(.5); }
+  40%  { opacity: .45; transform: scale(1.05); }
+  100% { opacity: 0; transform: scale(1.35); }
 }
 
 /* smaller pips once there are 15 chambers */
