@@ -6,7 +6,10 @@
   "scripts": {
     "build:web": "node scripts/build-web.mjs",
     "ios:sync": "npm run build:web && npx cap sync ios",
-    "ios:open": "npm run ios:sync && npx cap open ios"
+    "ios:open": "npm run ios:sync && npx cap open ios",
+    "ios:archive": "npm run build:web && npx cap sync ios && xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Release -destination 'generic/platform=iOS' -archivePath build/CaptainGo.xcarchive archive -allowProvisioningUpdates",
+    "ios:ipa": "xcodebuild -exportArchive -archivePath build/CaptainGo.xcarchive -exportOptionsPlist ios/ExportOptions.plist -exportPath build/export -allowProvisioningUpdates",
+    "ios:release": "npm run ios:archive && npm run ios:ipa"
   },
   "dependencies": {
     "@capacitor/core": "^8.4.2",

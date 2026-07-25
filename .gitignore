@@ -6,3 +6,4 @@ ios/App/App.xcworkspace/xcuserdata/
 ios/App/App.xcodeproj/xcuserdata/
 .DS_Store
 .claude/
+build/
