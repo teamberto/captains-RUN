@@ -34,8 +34,19 @@
 
     <div id="level-banner" class="hidden"></div>
 
-    <!-- how far through the 8 chambers you are; also shown on the end screen -->
+    <!-- how far through the chambers you are; also shown on the end screen -->
     <div id="chamber-map" class="hidden"></div>
+
+    <!-- sticker reward popup -->
+    <div id="sticker-pop" class="hidden">
+      <div id="sticker-pop-art"></div>
+      <div id="sticker-pop-name"></div>
+      <div id="sticker-pop-sub">NEW STICKER!</div>
+    </div>
+
+    <!-- stone-slab shatter played between chambers -->
+    <div id="shatter" class="hidden"></div>
+    <div id="flash" class="hidden"></div>
 
     <button id="pause-btn" class="hidden">⏸</button>
 
@@ -50,7 +61,7 @@
       <p class="story">You grabbed the Golden Banana — and the whole temple is coming down behind you.</p>
       <p>Swipe left/right to dodge, swipe up to jump, swipe down to slide.<br />
          <strong>Tap the screen</strong> (or the 🌀 button, or Space) for a spinning kick that smashes rocks!</p>
-      <p class="quest">🍌 Grab bananas, find the 🍪 cookies, escape all 8 chambers.</p>
+      <p class="quest">🍌 Grab bananas, find the 🍪 cookies, collect 🎟️ stickers for your sticker book!</p>
       <button id="start-btn">▶ PLAY</button>
     </div>
 
@@ -58,6 +69,8 @@
       <h1 id="end-title">Game Over</h1>
       <p id="end-msg"></p>
       <div id="trophy-shelf"></div>
+      <h2 class="book-title">🎟️ Sticker Book <span id="book-count"></span></h2>
+      <div id="sticker-book"></div>
       <button id="retry-btn">↻ PLAY AGAIN</button>
     </div>
 

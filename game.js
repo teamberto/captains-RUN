@@ -11,6 +11,13 @@ const endMsg = document.getElementById('end-msg');
 const exitFillEl = document.getElementById('exit-fill');
 const cookieValEl = document.getElementById('cookie-val');
 const chamberMapEl = document.getElementById('chamber-map');
+const stickerPop = document.getElementById('sticker-pop');
+const stickerPopArt = document.getElementById('sticker-pop-art');
+const stickerPopName = document.getElementById('sticker-pop-name');
+const stickerBookEl = document.getElementById('sticker-book');
+const bookCountEl = document.getElementById('book-count');
+const shatterEl = document.getElementById('shatter');
+const flashEl = document.getElementById('flash');
 const trophyShelfEl = document.getElementById('trophy-shelf');
 const swipeHint = document.getElementById('swipe-hint');
 const levelBanner = document.getElementById('level-banner');
@@ -85,6 +92,8 @@ function noiseBurst(dur, vol) {
 const sfx = {
   ring: () => tone(1046, 0.08, 'sine', 0.12, 0, 1568),
   cookie: () => { [523, 659, 784, 1046].forEach((f, i) => tone(f, 0.16, 'sine', 0.13, i * 0.06)); },
+  sticker: () => { [659, 880, 1046, 1318, 1568].forEach((f, i) => tone(f, 0.2, 'triangle', 0.13, i * 0.055)); },
+  shatter: () => { noiseBurst(0.38, 0.3); tone(120, 0.4, 'sawtooth', 0.17, 0, 48); tone(300, 0.2, 'square', 0.1, 0.02, 90); },
   kick: () => { noiseBurst(0.1, 0.1); tone(420, 0.13, 'triangle', 0.1, 0, 780); },
   smash: () => { noiseBurst(0.26, 0.26); tone(140, 0.28, 'sawtooth', 0.16, 0, 55); },
   jump: () => tone(400, 0.12, 'triangle', 0.1, 0, 700),
@@ -96,131 +105,171 @@ const sfx = {
 };
 
 // ---------- level theme data ----------
-const LEVEL_DATA = [
-  { // 1 - Temple Gate: sunset pouring in through the entrance
-    theme: {
-      name: 'Temple Gate', skyTop: 0x2a1a0c, skyBottom: 0xe0953c, fog: 0x9c7444,
-      groundTint: 0x9d968c, plankTint: 0xdcd2c2, rock: 0x7d7264,
-      hemiSky: 0xffcf8a, hemiGround: 0x5a3a18, sunColor: 0xffd08a,
-      stoneTint: 0xc4a878, idolTint: 0xd8b45a, torchColor: 0xff9a2a,
-    },
-    crates: [{ z: 30, lane: 1 }, { z: 80, lane: 2 }, { z: 155, lane: 1 }],
-    bars: [{ z: 65, lane: 1 }, { z: 170, lane: 0 }],
-    gaps: [{ z: 115, lane: 2 }, { z: 200, lane: 0 }],
-    enemies: [{ z: 55, lane: 0 }, { z: 105, lane: 1 }, { z: 180, lane: 2 }],
-    rings: [[15, 1], [18, 1], [21, 1], [42, 0], [45, 0], [48, 0], [95, 2], [98, 2], [101, 2], [140, 1], [143, 1], [146, 1], [190, 2], [193, 2], [196, 2]],
-    hearts: [[10, 2], [120, 0], [225, 1]],
-    cookies: [[68, 0], [178, 2]],
-  },
-  { // 2 - Idol Hall: deep interior, torchlit, watched by stone faces
-    theme: {
-      name: 'Idol Hall', skyTop: 0x140c06, skyBottom: 0x6a3f18, fog: 0x4a3826,
-      groundTint: 0x7d766c, plankTint: 0xded3bf, rock: 0x5f584c,
-      hemiSky: 0xd8a066, hemiGround: 0x2a1a0a, sunColor: 0xffb45a,
-      stoneTint: 0xa08760, idolTint: 0xe0c070, torchColor: 0xff8c1a,
-    },
-    crates: [{ z: 35, lane: 0 }, { z: 90, lane: 1 }, { z: 160, lane: 2 }],
-    bars: [{ z: 60, lane: 2 }, { z: 150, lane: 1 }],
-    gaps: [{ z: 75, lane: 1 }, { z: 120, lane: 0 }, { z: 210, lane: 2 }],
-    enemies: [{ z: 50, lane: 1 }, { z: 100, lane: 0 }, { z: 175, lane: 1 }, { z: 215, lane: 2 }],
-    rings: [[20, 2], [23, 2], [26, 2], [45, 1], [48, 1], [51, 1], [110, 0], [113, 0], [116, 0], [145, 2], [148, 2], [151, 2], [185, 1], [188, 1], [191, 1]],
-    hearts: [[10, 0], [125, 1], [230, 2]],
-    cookies: [[82, 2], [196, 1]],
-  },
-  { // 3 - Crystal Cavern: cool blue break from the warm halls
-    theme: {
-      name: 'Crystal Cavern', skyTop: 0x04121f, skyBottom: 0x1f5f7a, fog: 0x1b4658,
-      groundTint: 0x7d8a92, plankTint: 0xd6e2ea, rock: 0x46545e,
-      hemiSky: 0x8fd8f0, hemiGround: 0x0e2430, sunColor: 0xbfe8ff,
-      stoneTint: 0x8fa3ae, idolTint: 0x7fe4ff, torchColor: 0x49c8ff,
-      propAccent: 'crystal',
-    },
-    crates: [{ z: 28, lane: 2 }, { z: 88, lane: 0 }, { z: 148, lane: 1 }, { z: 205, lane: 2 }],
-    bars: [{ z: 62, lane: 0 }, { z: 130, lane: 2 }, { z: 185, lane: 1 }],
-    gaps: [{ z: 45, lane: 1 }, { z: 108, lane: 1 }, { z: 168, lane: 0 }],
-    enemies: [{ z: 72, lane: 1 }, { z: 118, lane: 2 }, { z: 160, lane: 0 }, { z: 220, lane: 1 }],
-    rings: [[14, 0], [17, 0], [20, 0], [52, 2], [55, 2], [58, 2], [98, 1], [101, 1], [104, 1], [138, 0], [141, 0], [144, 0], [195, 2], [198, 2], [201, 2]],
-    hearts: [[12, 1], [128, 2], [228, 0]],
-    cookies: [[76, 1], [188, 0]],
-  },
-  { // 4 - Lava Vault: the temple starts to burn
-    theme: {
-      name: 'Lava Vault', skyTop: 0x1a0603, skyBottom: 0xc03a10, fog: 0x77341c,
-      groundTint: 0x756055, plankTint: 0xdcc6b8, rock: 0x4d3a34,
-      hemiSky: 0xff7a3a, hemiGround: 0x3a1206, sunColor: 0xff8a4a,
-      stoneTint: 0x7a5442, idolTint: 0xffa050, torchColor: 0xff5a1a,
-    },
-    crates: [{ z: 40, lane: 2 }, { z: 95, lane: 0 }, { z: 165, lane: 1 }],
-    bars: [{ z: 70, lane: 0 }, { z: 155, lane: 2 }],
-    gaps: [{ z: 55, lane: 1 }, { z: 130, lane: 2 }, { z: 195, lane: 0 }],
-    enemies: [{ z: 60, lane: 2 }, { z: 110, lane: 1 }, { z: 140, lane: 0 }, { z: 205, lane: 1 }],
-    rings: [[25, 0], [28, 0], [31, 0], [80, 1], [83, 1], [86, 1], [120, 2], [123, 2], [126, 2], [150, 0], [153, 0], [156, 0], [200, 1], [203, 1], [206, 1]],
-    hearts: [[12, 1], [118, 0], [232, 2]],
-    cookies: [[88, 0], [176, 2]],
-  },
-  { // 5 - Flooded Cistern: ankle-deep water either side of the causeway
-    theme: {
-      name: 'Flooded Cistern', skyTop: 0x061613, skyBottom: 0x2a6b62, fog: 0x1d4b46,
-      groundTint: 0x6f8480, plankTint: 0xd4e2dc, rock: 0x3f5450,
-      hemiSky: 0x86ded0, hemiGround: 0x102a26, sunColor: 0xc8f4ec,
-      stoneTint: 0x8ba39c, idolTint: 0x6fe0c0, torchColor: 0x3ad0b0,
-      water: true,
-    },
-    crates: [{ z: 33, lane: 1 }, { z: 84, lane: 2 }, { z: 142, lane: 0 }, { z: 198, lane: 1 }],
-    bars: [{ z: 58, lane: 2 }, { z: 118, lane: 0 }, { z: 178, lane: 2 }],
-    gaps: [{ z: 70, lane: 1 }, { z: 132, lane: 2 }, { z: 212, lane: 0 }],
-    enemies: [{ z: 48, lane: 0 }, { z: 100, lane: 1 }, { z: 158, lane: 2 }, { z: 222, lane: 1 }],
-    rings: [[18, 2], [21, 2], [24, 2], [62, 1], [65, 1], [68, 1], [105, 0], [108, 0], [111, 0], [150, 1], [153, 1], [156, 1], [188, 0], [191, 0], [194, 0]],
-    hearts: [[10, 1], [126, 0], [230, 2]],
-    cookies: [[92, 2], [166, 1]],
-  },
-  { // 6 - Golden Treasury: the hoard room, bright and gaudy
-    theme: {
-      name: 'Golden Treasury', skyTop: 0x30200a, skyBottom: 0xf0c050, fog: 0xb08c3a,
-      groundTint: 0xada08a, plankTint: 0xf0e2c0, rock: 0x8a7846,
-      hemiSky: 0xffe8a8, hemiGround: 0x6a5218, sunColor: 0xfff0c0,
-      stoneTint: 0xd8c08a, idolTint: 0xffd23a, torchColor: 0xffc23a,
-    },
-    crates: [{ z: 26, lane: 0 }, { z: 76, lane: 1 }, { z: 136, lane: 2 }, { z: 192, lane: 0 }],
-    bars: [{ z: 52, lane: 1 }, { z: 112, lane: 2 }, { z: 172, lane: 0 }],
-    gaps: [{ z: 64, lane: 0 }, { z: 124, lane: 1 }, { z: 204, lane: 2 }],
-    enemies: [{ z: 44, lane: 2 }, { z: 92, lane: 0 }, { z: 152, lane: 1 }, { z: 216, lane: 2 }],
-    rings: [[13, 1], [16, 1], [19, 1], [36, 2], [39, 2], [42, 2], [86, 0], [89, 0], [92, 0], [144, 1], [147, 1], [150, 1], [182, 2], [185, 2], [188, 2], [210, 0], [213, 0]],
-    hearts: [[10, 0], [122, 2], [226, 1]],
-    cookies: [[58, 1], [158, 0], [200, 2]],
-  },
-  { // 7 - Collapsing Sanctum: the roof is coming down
-    theme: {
-      name: 'Collapsing Sanctum', skyTop: 0x0a0710, skyBottom: 0x4a2a5a, fog: 0x2f2436,
-      groundTint: 0x7b7580, plankTint: 0xdcd4da, rock: 0x494150,
-      hemiSky: 0xc0a0d8, hemiGround: 0x1a1018, sunColor: 0xffd8a0,
-      stoneTint: 0x8e7a76, idolTint: 0xffd479, torchColor: 0xffc23a,
-    },
-    crates: [{ z: 32, lane: 1 }, { z: 85, lane: 2 }, { z: 150, lane: 0 }, { z: 200, lane: 1 }],
-    bars: [{ z: 58, lane: 2 }, { z: 122, lane: 1 }, { z: 175, lane: 0 }],
-    gaps: [{ z: 70, lane: 0 }, { z: 110, lane: 1 }, { z: 190, lane: 2 }],
-    enemies: [{ z: 45, lane: 0 }, { z: 95, lane: 1 }, { z: 125, lane: 2 }, { z: 165, lane: 0 }, { z: 218, lane: 2 }],
-    rings: [[16, 2], [19, 2], [22, 2], [50, 0], [53, 0], [56, 0], [100, 1], [103, 1], [106, 1], [155, 2], [158, 2], [161, 2], [195, 0], [198, 0], [201, 0]],
-    hearts: [[10, 0], [130, 2], [230, 1]],
-    cookies: [[74, 2], [184, 1]],
-  },
-  { // 8 - Sky Terrace: out on the roof, daylight, the last dash
-    theme: {
-      name: 'Sky Terrace', skyTop: 0x2b7fd0, skyBottom: 0xd8f0ff, fog: 0xbfe4f5,
-      groundTint: 0xc0bcae, plankTint: 0xefe6d2, rock: 0x9a9282,
-      hemiSky: 0xdff2ff, hemiGround: 0x8a8270, sunColor: 0xfffaf0,
-      stoneTint: 0xd8cdb4, idolTint: 0xffd86a, torchColor: 0xffb03a,
-      openSky: true,
-    },
-    crates: [{ z: 24, lane: 2 }, { z: 72, lane: 0 }, { z: 128, lane: 1 }, { z: 186, lane: 2 }],
-    bars: [{ z: 48, lane: 1 }, { z: 104, lane: 0 }, { z: 164, lane: 2 }, { z: 208, lane: 1 }],
-    gaps: [{ z: 60, lane: 2 }, { z: 116, lane: 1 }, { z: 150, lane: 0 }, { z: 196, lane: 0 }],
-    enemies: [{ z: 38, lane: 0 }, { z: 88, lane: 2 }, { z: 140, lane: 1 }, { z: 176, lane: 0 }, { z: 220, lane: 2 }],
-    rings: [[12, 1], [15, 1], [18, 1], [32, 0], [35, 0], [38, 0], [80, 2], [83, 2], [86, 2], [134, 0], [137, 0], [140, 0], [170, 1], [173, 1], [176, 1], [212, 2], [215, 2]],
-    hearts: [[10, 1], [200, 2], [232, 0]],
-    cookies: [[66, 0], [148, 2], [206, 1]],
-  },
+// 15 chambers. Palettes are authored; obstacle/pickup layouts are generated
+// from a per-level seed by makeLayout() below, which guarantees hazard spacing
+// and keeps every pickup clear of hazards.
+const THEMES = [
+  { name: 'Temple Gate', skyTop: 0x2a1a0c, skyBottom: 0xe0953c, fog: 0x9c7444,
+    groundTint: 0x9d968c, plankTint: 0xdcd2c2, rock: 0x7d7264,
+    hemiSky: 0xffcf8a, hemiGround: 0x5a3a18, sunColor: 0xffd08a,
+    stoneTint: 0xc4a878, idolTint: 0xd8b45a, torchColor: 0xff9a2a },
+  { name: 'Idol Hall', skyTop: 0x140c06, skyBottom: 0x6a3f18, fog: 0x4a3826,
+    groundTint: 0x7d766c, plankTint: 0xded3bf, rock: 0x5f584c,
+    hemiSky: 0xd8a066, hemiGround: 0x2a1a0a, sunColor: 0xffb45a,
+    stoneTint: 0xa08760, idolTint: 0xe0c070, torchColor: 0xff8c1a },
+  { name: 'Crystal Cavern', skyTop: 0x04121f, skyBottom: 0x1f5f7a, fog: 0x1b4658,
+    groundTint: 0x7d8a92, plankTint: 0xd6e2ea, rock: 0x46545e,
+    hemiSky: 0x8fd8f0, hemiGround: 0x0e2430, sunColor: 0xbfe8ff,
+    stoneTint: 0x8fa3ae, idolTint: 0x7fe4ff, torchColor: 0x49c8ff,
+    propAccent: 'crystal' },
+  { name: 'Lava Vault', skyTop: 0x1a0603, skyBottom: 0xc03a10, fog: 0x77341c,
+    groundTint: 0x756055, plankTint: 0xdcc6b8, rock: 0x4d3a34,
+    hemiSky: 0xff7a3a, hemiGround: 0x3a1206, sunColor: 0xff8a4a,
+    stoneTint: 0x7a5442, idolTint: 0xffa050, torchColor: 0xff5a1a },
+  { name: 'Flooded Cistern', skyTop: 0x061613, skyBottom: 0x2a6b62, fog: 0x1d4b46,
+    groundTint: 0x6f8480, plankTint: 0xd4e2dc, rock: 0x3f5450,
+    hemiSky: 0x86ded0, hemiGround: 0x102a26, sunColor: 0xc8f4ec,
+    stoneTint: 0x8ba39c, idolTint: 0x6fe0c0, torchColor: 0x3ad0b0,
+    water: true },
+  { name: 'Golden Treasury', skyTop: 0x30200a, skyBottom: 0xf0c050, fog: 0xb08c3a,
+    groundTint: 0xada08a, plankTint: 0xf0e2c0, rock: 0x8a7846,
+    hemiSky: 0xffe8a8, hemiGround: 0x6a5218, sunColor: 0xfff0c0,
+    stoneTint: 0xd8c08a, idolTint: 0xffd23a, torchColor: 0xffc23a },
+  { name: 'Collapsing Sanctum', skyTop: 0x0a0710, skyBottom: 0x4a2a5a, fog: 0x2f2436,
+    groundTint: 0x7b7580, plankTint: 0xdcd4da, rock: 0x494150,
+    hemiSky: 0xc0a0d8, hemiGround: 0x1a1018, sunColor: 0xffd8a0,
+    stoneTint: 0x8e7a76, idolTint: 0xffd479, torchColor: 0xffc23a },
+  { name: 'Sky Terrace', skyTop: 0x2b7fd0, skyBottom: 0xd8f0ff, fog: 0xbfe4f5,
+    groundTint: 0xc0bcae, plankTint: 0xefe6d2, rock: 0x9a9282,
+    hemiSky: 0xdff2ff, hemiGround: 0x8a8270, sunColor: 0xfffaf0,
+    stoneTint: 0xd8cdb4, idolTint: 0xffd86a, torchColor: 0xffb03a,
+    openSky: true },
+  { name: 'Amber Halls', skyTop: 0x2a1604, skyBottom: 0xdc9a26, fog: 0x9a6a24,
+    groundTint: 0xa89878, plankTint: 0xf2e0bc, rock: 0x6f5a34,
+    hemiSky: 0xffdc96, hemiGround: 0x4a3210, sunColor: 0xffdc9a,
+    stoneTint: 0xcfb078, idolTint: 0xffcf50, torchColor: 0xffa32a },
+  { name: 'Obsidian Steps', skyTop: 0x05040a, skyBottom: 0x2e1c46, fog: 0x241634,
+    groundTint: 0x8c8698, plankTint: 0xe0dae8, rock: 0x2e2838,
+    hemiSky: 0xb49ce0, hemiGround: 0x140f1e, sunColor: 0xe0d4ff,
+    stoneTint: 0x9c94a8, idolTint: 0xc9a6ff, torchColor: 0xa878ff },
+  { name: 'Sunken Grotto', skyTop: 0x04141c, skyBottom: 0x1e7088, fog: 0x1a5566,
+    groundTint: 0x7f9298, plankTint: 0xd8ecf2, rock: 0x3c5660,
+    hemiSky: 0x92e2f2, hemiGround: 0x0c2830, sunColor: 0xcaf2ff,
+    stoneTint: 0x94aeb6, idolTint: 0x74e8e0, torchColor: 0x40d8e8,
+    water: true },
+  { name: 'Emerald Vault', skyTop: 0x061a0c, skyBottom: 0x2f8a44, fog: 0x24603a,
+    groundTint: 0x84947e, plankTint: 0xdcecd4, rock: 0x39543c,
+    hemiSky: 0x9ae8a8, hemiGround: 0x102a16, sunColor: 0xd6f7cf,
+    stoneTint: 0x9ab092, idolTint: 0x8cf0a0, torchColor: 0x54e07a,
+    propAccent: 'crystal' },
+  { name: 'Ivory Gallery', skyTop: 0x2a2620, skyBottom: 0xe8dcc4, fog: 0xb8ac96,
+    groundTint: 0xbcb6a6, plankTint: 0xf6f0e2, rock: 0x8e8676,
+    hemiSky: 0xfff4e0, hemiGround: 0x6a6252, sunColor: 0xfffaf2,
+    stoneTint: 0xe0d6c0, idolTint: 0xffe9a8, torchColor: 0xffc266 },
+  { name: 'Storm Terrace', skyTop: 0x1c2a3a, skyBottom: 0x9ab4c8, fog: 0x7d94a6,
+    groundTint: 0xa8aeb4, plankTint: 0xe4eaee, rock: 0x5c6670,
+    hemiSky: 0xcfe0ea, hemiGround: 0x46505a, sunColor: 0xe8f2f8,
+    stoneTint: 0xbcc4ca, idolTint: 0xdce8f0, torchColor: 0x7fd0ff,
+    openSky: true },
+  { name: 'Golden Summit', skyTop: 0x1f6fc8, skyBottom: 0xffe9b8, fog: 0xe0c890,
+    groundTint: 0xcabf9e, plankTint: 0xfaf0d4, rock: 0xa08c5c,
+    hemiSky: 0xfff2cc, hemiGround: 0x8a7648, sunColor: 0xfffdf4,
+    stoneTint: 0xe6d4a2, idolTint: 0xffd23a, torchColor: 0xffbe3a,
+    openSky: true },
 ];
+
+// small deterministic PRNG so a chamber's layout is identical every playthrough
+function mulberry32(a) {
+  return function () {
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+const HAZARD_MIN_GAP = 15;   // never place two hazards closer than this
+const PICKUP_CLEARANCE = 6;  // pickups stay this far from any hazard
+
+function makeLayout(levelIndex) {
+  const rnd = mulberry32(1337 + levelIndex * 7919);
+  const difficulty = Math.min(1, levelIndex / (THEMES.length - 1));
+  const first = 30, last = FINISH_Z - 26;
+
+  // ---- hazards, one lane each, spaced so two never stack up
+  const kinds = ['crate', 'gap', 'bar', 'fire'];
+  const hazards = [];
+  let z = first;
+  let k = levelIndex % kinds.length;
+  while (z < last) {
+    // later chambers pack them a little tighter
+    const kind = kinds[k % kinds.length];
+    hazards.push({ kind, z: Math.round(z), lane: Math.floor(rnd() * 3) });
+    k += 1 + (rnd() < 0.35 ? 1 : 0);
+    z += HAZARD_MIN_GAP + 5 + rnd() * 8 - difficulty * 3;
+  }
+
+  const hazardAt = (zz) => hazards.filter(h => Math.abs(h.z - zz) < PICKUP_CLEARANCE);
+  const freeLane = (zz, r) => {
+    const taken = new Set(hazardAt(zz).map(h => h.lane));
+    const open = [0, 1, 2].filter(l => !taken.has(l));
+    return open[Math.floor(r() * open.length)] ?? 1;
+  };
+
+  // ---- clear stretches between consecutive hazards become pickup slots
+  const slots = [];
+  for (let i = 0; i < hazards.length - 1; i++) {
+    const a = hazards[i].z, b = hazards[i + 1].z;
+    if (b - a >= 14) slots.push(Math.round((a + b) / 2));
+  }
+  // a couple of slots before the first hazard and after the last
+  slots.unshift(Math.round(first / 2));
+  slots.push(Math.round(last + 12));
+
+  const used = new Set();
+  const takeSlot = () => {
+    for (let i = 0; i < slots.length; i++) {
+      const idx = Math.floor(rnd() * slots.length);
+      if (!used.has(idx)) { used.add(idx); return slots[idx]; }
+    }
+    for (let i = 0; i < slots.length; i++) if (!used.has(i)) { used.add(i); return slots[i]; }
+    return slots[0];
+  };
+
+  // ---- pickups: stickers and cookies first so they get the roomiest slots
+  const stickers = [];
+  for (let i = 0; i < 2; i++) {
+    const sz = takeSlot();
+    stickers.push([sz, freeLane(sz, rnd)]);
+  }
+  const cookies = [];
+  for (let i = 0; i < (levelIndex % 3 === 2 ? 3 : 2); i++) {
+    const cz = takeSlot();
+    cookies.push([cz, freeLane(cz, rnd)]);
+  }
+  const hearts = [];
+  for (let i = 0; i < 3; i++) {
+    const hz = takeSlot();
+    hearts.push([hz, freeLane(hz, rnd)]);
+  }
+  // ---- bananas fill the remaining slots, three in a row each
+  const rings = [];
+  slots.forEach((sz, idx) => {
+    if (used.has(idx)) return;
+    const lane = freeLane(sz, rnd);
+    [-3, 0, 3].forEach(off => rings.push([sz + off, lane]));
+  });
+
+  return {
+    crates: hazards.filter(h => h.kind === 'crate').map(h => ({ z: h.z, lane: h.lane })),
+    bars:   hazards.filter(h => h.kind === 'bar').map(h => ({ z: h.z, lane: h.lane })),
+    gaps:   hazards.filter(h => h.kind === 'gap').map(h => ({ z: h.z, lane: h.lane })),
+    enemies:hazards.filter(h => h.kind === 'fire').map(h => ({ z: h.z, lane: h.lane })),
+    rings, hearts, cookies, stickers,
+  };
+}
+
+const LEVEL_DATA = THEMES.map((theme, i) => ({ theme, ...makeLayout(i) }));
 
 // ---------- runtime progress state ----------
 let level = 1;
@@ -249,6 +298,7 @@ let enemies = [];
 let rings = [];
 let heartPickups = [];
 let cookies = [];
+let stickerPickups = [];
 
 // ---------- input: swipe gestures ----------
 function shiftLane(dir) {
@@ -978,34 +1028,129 @@ function makeFireTrapMesh(theme) {
 
   // flame cluster, kept low and splayed outward
   const flames = new THREE.Group();
-  const hotMat = new THREE.MeshStandardMaterial({
-    color: 0xffd066, emissive: 0xff8a12, emissiveIntensity: 2.3,
+  // Fire is deliberately NOT theme-tinted - it should always read as fire.
+  // Three bands: deep red at the base, orange body, yellow-hot tips.
+  const emberMat = new THREE.MeshStandardMaterial({
+    color: 0xb81800, emissive: 0xd42400, emissiveIntensity: 2.2,
     transparent: true, opacity: 0.95,
   });
   const coolMat = new THREE.MeshStandardMaterial({
-    color: theme && theme.torchColor ? theme.torchColor : 0xff6a1a,
-    emissive: theme && theme.torchColor ? theme.torchColor : 0xff4a08,
-    emissiveIntensity: 1.9, transparent: true, opacity: 0.78,
+    color: 0xff4a05, emissive: 0xff3800, emissiveIntensity: 2.5,
+    transparent: true, opacity: 0.9,
+  });
+  const hotMat = new THREE.MeshStandardMaterial({
+    color: 0xff9a1e, emissive: 0xff7000, emissiveIntensity: 2.9,
+    transparent: true, opacity: 0.92,
+  });
+  const tipMat = new THREE.MeshStandardMaterial({
+    color: 0xffd85a, emissive: 0xffb020, emissiveIntensity: 3.2,
+    transparent: true, opacity: 0.85,
   });
 
-  const base = new THREE.Mesh(new THREE.SphereGeometry(0.44, 14, 10), coolMat);
-  base.scale.set(1, 0.48, 1);
-  base.position.y = 0.2;
+  // glowing coals at the very bottom
+  const base = new THREE.Mesh(new THREE.SphereGeometry(0.46, 14, 10), emberMat);
+  base.scale.set(1, 0.42, 1);
+  base.position.y = 0.16;
   flames.add(base);
-  const core = new THREE.Mesh(new THREE.ConeGeometry(0.24, 0.52, 8), hotMat);
-  core.position.y = 0.42;
-  flames.add(core);
-  for (let i = 0; i < 6; i++) {
-    const ang = (i / 6) * Math.PI * 2;
-    const tongue = new THREE.Mesh(new THREE.ConeGeometry(0.13, 0.36 + (i % 2) * 0.1, 6), coolMat);
-    tongue.position.set(Math.cos(ang) * 0.27, 0.26 + (i % 2) * 0.05, Math.sin(ang) * 0.27);
-    tongue.rotation.set(Math.sin(ang) * 0.55, 0, -Math.cos(ang) * 0.55);
+  // main orange body
+  const body = new THREE.Mesh(new THREE.SphereGeometry(0.36, 14, 10), coolMat);
+  body.scale.set(1, 0.72, 1);
+  body.position.y = 0.3;
+  flames.add(body);
+  // licking tongues around the rim, alternating orange and yellow-hot
+  for (let i = 0; i < 9; i++) {
+    const ang = (i / 9) * Math.PI * 2;
+    const tall = i % 3 === 0;
+    const tongue = new THREE.Mesh(
+      new THREE.ConeGeometry(0.075 + (i % 2) * 0.025, tall ? 0.58 : 0.4, 6),
+      i % 2 ? hotMat : coolMat,
+    );
+    tongue.position.set(Math.cos(ang) * 0.24, (tall ? 0.42 : 0.32), Math.sin(ang) * 0.24);
+    tongue.rotation.set(Math.sin(ang) * 0.42, 0, -Math.cos(ang) * 0.42);
     flames.add(tongue);
   }
+  // central plume with the hottest tip - stays under FIRE_CLEAR_Y
+  const core = new THREE.Mesh(new THREE.ConeGeometry(0.19, 0.56, 8), hotMat);
+  core.position.y = 0.44;
+  flames.add(core);
+  const tip = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.34, 6), tipMat);
+  tip.position.y = 0.64;
+  flames.add(tip);
   g.add(flames);
 
   g.userData.flames = flames;
-  g.userData.glow = [base, core];
+  g.userData.glow = [base, body, core, tip];
+  return g;
+}
+
+// ---------- flooded gap: cold water with a circling shark fin ----------
+const waterSurfMat = new THREE.MeshStandardMaterial({
+  color: 0x2a8ec0, roughness: 0.1, metalness: 0.35,
+  emissive: 0x10506e, emissiveIntensity: 0.85,
+  transparent: true, opacity: 0.92,
+});
+const waterDeepMat = new THREE.MeshStandardMaterial({ color: 0x0a3348, roughness: 0.7 });
+const foamMat = new THREE.MeshStandardMaterial({
+  color: 0xdff4ff, roughness: 0.5, emissive: 0x9fd8f0, emissiveIntensity: 0.5,
+});
+const sharkMat = new THREE.MeshStandardMaterial({ color: 0x4a5a66, roughness: 0.65 });
+const sharkPaleMat = new THREE.MeshStandardMaterial({ color: 0x8fa2ad, roughness: 0.7 });
+
+function makeWaterGapMesh() {
+  const g = new THREE.Group();
+  const LANE_W = 2.15, LEN = 4.4;
+
+  // dark shaft below, so the hole still reads as depth
+  const shaft = new THREE.Mesh(new THREE.BoxGeometry(LANE_W, 1.6, LEN), waterDeepMat);
+  shaft.position.y = -1.0;
+  g.add(shaft);
+
+  // surface, sitting just below the walkway lip
+  const surf = new THREE.Mesh(new THREE.BoxGeometry(LANE_W, 0.08, LEN), waterSurfMat);
+  surf.position.y = -0.24;
+  g.add(surf);
+
+  // foam along the two open edges
+  [-1, 1].forEach(s => {
+    const foam = new THREE.Mesh(new THREE.BoxGeometry(LANE_W, 0.07, 0.22), foamMat);
+    foam.position.set(0, -0.19, s * (LEN / 2 - 0.11));
+    g.add(foam);
+  });
+
+  // shark: dorsal fin + tail tip + a wake, cruising across the gap
+  const shark = new THREE.Group();
+  // tall swept dorsal fin - the whole point is that it reads instantly
+  const fin = new THREE.Mesh(new THREE.ConeGeometry(0.42, 0.95, 4), sharkMat);
+  fin.rotation.y = Math.PI / 4;
+  fin.position.set(0, 0.46, 0);
+  fin.scale.set(0.42, 1, 1.15);
+  shark.add(fin);
+  const finRidge = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.5, 4), sharkPaleMat);
+  finRidge.rotation.y = Math.PI / 4;
+  finRidge.position.set(0, 0.62, 0.05);
+  finRidge.scale.set(0.34, 1, 1);
+  shark.add(finRidge);
+  // hint of the back breaking the surface
+  const back = new THREE.Mesh(new THREE.SphereGeometry(0.3, 12, 8), sharkMat);
+  back.scale.set(0.7, 0.32, 1.7);
+  back.position.set(0, 0.04, -0.2);
+  shark.add(back);
+  const tail = new THREE.Mesh(new THREE.ConeGeometry(0.26, 0.5, 4), sharkMat);
+  tail.rotation.set(0, Math.PI / 4, 0.32);
+  tail.position.set(0, 0.2, -0.95);
+  tail.scale.set(0.34, 1, 1);
+  shark.add(tail);
+  const wake = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.05, 1.6), foamMat);
+  wake.position.set(0, 0.03, -0.5);
+  shark.add(wake);
+  const splash = new THREE.Mesh(new THREE.SphereGeometry(0.26, 10, 8), foamMat);
+  splash.scale.set(1.5, 0.22, 1);
+  splash.position.set(0, 0.05, 0.1);
+  shark.add(splash);
+  shark.position.y = -0.24;
+  g.add(shark);
+
+  g.userData = { shark, surf, phase: Math.random() * Math.PI * 2 };
   return g;
 }
 
@@ -1139,7 +1284,7 @@ function makeBananaMesh() {
   tip.rotation.z = -2.4;
   g.add(tip);
   g.rotation.z = 0.35;
-  g.scale.setScalar(0.78);
+  g.scale.setScalar(1.56);   // 2x
   return g;
 }
 
@@ -1189,7 +1334,140 @@ function makeCookieMesh() {
   halo.scale.y = 0.62;
   g.add(halo);
   g.rotation.x = -0.35;   // tip it toward the camera so the chips read
+  g.scale.setScalar(2);   // 2x
   return g;
+}
+
+// ---------- collectible stickers (the sticker book) ----------
+// Two per chamber, derived from the level index so the book fills in order.
+const STICKERS = [
+  { id: 'rocket',   emoji: '\u{1F680}', name: 'Rocket',      bg: '#ffd9e6' },
+  { id: 'saturn',   emoji: '\u{1FA90}', name: 'Ringed Planet', bg: '#dde4ff' },
+  { id: 'racecar',  emoji: '\u{1F697}', name: 'Race Car',    bg: '#ffe0d0' },
+  { id: 'trex',     emoji: '\u{1F996}', name: 'T-Rex',       bg: '#d8f5d8' },
+  { id: 'cake',     emoji: '\u{1F382}', name: 'Birthday Cake', bg: '#ffe6f2' },
+  { id: 'rainbow',  emoji: '\u{1F308}', name: 'Rainbow',     bg: '#e6f7ff' },
+  { id: 'icecream', emoji: '\u{1F366}', name: 'Ice Cream',   bg: '#fff0dc' },
+  { id: 'soccer',   emoji: '\u{26BD}',  name: 'Soccer Ball', bg: '#eef2f5' },
+  { id: 'dino',     emoji: '\u{1F995}', name: 'Longneck',    bg: '#e2f0d9' },
+  { id: 'balloon',  emoji: '\u{1F388}', name: 'Balloon',     bg: '#ffe3e3' },
+  { id: 'train',    emoji: '\u{1F682}', name: 'Steam Train', bg: '#e8e2d6' },
+  { id: 'octopus',  emoji: '\u{1F419}', name: 'Octopus',     bg: '#ffe0ee' },
+  { id: 'butterfly',emoji: '\u{1F98B}', name: 'Butterfly',   bg: '#f0e6ff' },
+  { id: 'donut',    emoji: '\u{1F369}', name: 'Donut',       bg: '#ffeadd' },
+  { id: 'star',     emoji: '\u{2B50}',  name: 'Gold Star',   bg: '#fff6d0' },
+  { id: 'dolphin',  emoji: '\u{1F42C}', name: 'Dolphin',     bg: '#dff0ff' },
+  { id: 'pizza',    emoji: '\u{1F355}', name: 'Pizza Slice', bg: '#ffe8cc' },
+  { id: 'turtle',   emoji: '\u{1F422}', name: 'Turtle',      bg: '#ddf3e2' },
+  { id: 'guitar',   emoji: '\u{1F3B8}', name: 'Guitar',      bg: '#ffe4c9' },
+  { id: 'lion',     emoji: '\u{1F981}', name: 'Lion',        bg: '#ffeec2' },
+  { id: 'digger',   emoji: '\u{1F69C}', name: 'Digger',      bg: '#fff0c0' },
+  { id: 'ufo',      emoji: '\u{1F6F8}', name: 'Flying Saucer', bg: '#e0ffe9' },
+  { id: 'crab',     emoji: '\u{1F980}', name: 'Crab',        bg: '#ffe0dc' },
+  { id: 'kite',     emoji: '\u{1FA81}', name: 'Kite',        bg: '#e4f0ff' },
+  { id: 'monkey',   emoji: '\u{1F435}', name: 'Monkey',      bg: '#f6e6d2' },
+  { id: 'fireeng',  emoji: '\u{1F692}', name: 'Fire Engine', bg: '#ffdede' },
+  { id: 'penguin',  emoji: '\u{1F427}', name: 'Penguin',     bg: '#e6f4ff' },
+  { id: 'cupcake',  emoji: '\u{1F9C1}', name: 'Cupcake',     bg: '#ffe8f4' },
+  { id: 'whale',    emoji: '\u{1F433}', name: 'Whale',       bg: '#dceeff' },
+  { id: 'trophy',   emoji: '\u{1F3C6}', name: 'Golden Trophy', bg: '#fff3c4' },
+];
+
+// which two stickers live in a given chamber
+function stickersForLevel(levelNum) {
+  const a = ((levelNum - 1) * 2) % STICKERS.length;
+  const b = (a + 1) % STICKERS.length;
+  return [STICKERS[a], STICKERS[b]];
+}
+
+// persisted across sessions so the book genuinely fills up over time
+const STICKER_STORE_KEY = 'captainGo.stickers.v1';
+function loadStickerBook() {
+  try {
+    const raw = localStorage.getItem(STICKER_STORE_KEY);
+    return raw ? new Set(JSON.parse(raw)) : new Set();
+  } catch (e) { return new Set(); }
+}
+function saveStickerBook(set) {
+  try { localStorage.setItem(STICKER_STORE_KEY, JSON.stringify([...set])); } catch (e) { /* private mode */ }
+}
+let stickerBook = loadStickerBook();
+
+const stickerTexCache = {};
+function makeStickerTexture(def) {
+  if (stickerTexCache[def.id]) return stickerTexCache[def.id];
+  const c = document.createElement('canvas');
+  c.width = 128; c.height = 128;
+  const ctx = c.getContext('2d');
+  // rounded pastel card
+  const r = 24;
+  ctx.fillStyle = def.bg;
+  ctx.beginPath();
+  ctx.moveTo(r, 0); ctx.lineTo(128 - r, 0); ctx.quadraticCurveTo(128, 0, 128, r);
+  ctx.lineTo(128, 128 - r); ctx.quadraticCurveTo(128, 128, 128 - r, 128);
+  ctx.lineTo(r, 128); ctx.quadraticCurveTo(0, 128, 0, 128 - r);
+  ctx.lineTo(0, r); ctx.quadraticCurveTo(0, 0, r, 0);
+  ctx.fill();
+  ctx.font = '86px -apple-system, "Apple Color Emoji", "Segoe UI Emoji", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(def.emoji, 64, 70);
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  stickerTexCache[def.id] = tex;
+  return tex;
+}
+
+const stickerBackMat = new THREE.MeshStandardMaterial({
+  color: 0xffffff, roughness: 0.45, emissive: 0x555555, emissiveIntensity: 0.35,
+});
+function makeStickerMesh(def) {
+  const g = new THREE.Group();
+  // white die-cut backing, slightly larger than the art
+  const back = new THREE.Mesh(new THREE.BoxGeometry(0.92, 0.92, 0.08), stickerBackMat);
+  g.add(back);
+  const faceMat = new THREE.MeshStandardMaterial({
+    map: makeStickerTexture(def), roughness: 0.4,
+    emissive: 0xffffff, emissiveIntensity: 0.22,
+  });
+  [0.05, -0.05].forEach((z, i) => {
+    const face = new THREE.Mesh(new THREE.PlaneGeometry(0.8, 0.8), faceMat);
+    face.position.z = z;
+    if (i === 1) face.rotation.y = Math.PI;
+    g.add(face);
+  });
+  // soft halo so it stands out as a prize
+  const halo = new THREE.Mesh(
+    new THREE.SphereGeometry(0.78, 14, 12),
+    new THREE.MeshBasicMaterial({ color: 0xfff0b0, transparent: true, opacity: 0.14 }),
+  );
+  halo.scale.set(1, 1, 0.45);
+  g.add(halo);
+  g.userData.def = def;
+  return g;
+}
+
+// popup shown when one is picked up
+function showStickerPop(def) {
+  stickerPopArt.textContent = def.emoji;
+  stickerPopArt.style.background = def.bg;
+  stickerPopName.textContent = def.name;
+  stickerPop.classList.remove('hidden');
+  clearTimeout(showStickerPop._t);
+  showStickerPop._t = setTimeout(() => stickerPop.classList.add('hidden'), 1500);
+}
+
+function renderStickerBook() {
+  stickerBookEl.innerHTML = '';
+  STICKERS.forEach(def => {
+    const cell = document.createElement('div');
+    const have = stickerBook.has(def.id);
+    cell.className = 'sb' + (have ? ' have' : '');
+    cell.textContent = have ? def.emoji : '?';
+    cell.title = have ? def.name : 'Not found yet';
+    stickerBookEl.appendChild(cell);
+  });
+  bookCountEl.textContent = `${stickerBook.size} / ${STICKERS.length}`;
 }
 
 function makeHeartMesh() {
@@ -1236,6 +1514,8 @@ function buildLevel(levelNum) {
   rings.forEach(r => { scene.remove(r.mesh); disposeObject(r.mesh); });
   heartPickups.forEach(h => { scene.remove(h.mesh); disposeObject(h.mesh); });
   cookies.forEach(c => { scene.remove(c.mesh); disposeObject(c.mesh); });
+  gaps.forEach(g => { if (g.mesh) { scene.remove(g.mesh); disposeObject(g.mesh); } });
+  stickerPickups.forEach(s => { scene.remove(s.mesh); disposeObject(s.mesh); });
 
   // Obstacle rock is deliberately theme-independent: a consistent dark stone
   // against a consistently light floor is what keeps it readable everywhere.
@@ -1310,6 +1590,11 @@ function buildLevel(levelNum) {
   });
 
   gaps = data.gaps.map(g => ({ ...g }));
+  gaps.forEach(gp => {
+    gp.mesh = makeWaterGapMesh();
+    gp.mesh.position.set(LANES_X[gp.lane], 0, gp.z);
+    scene.add(gp.mesh);
+  });
 
   enemies = data.enemies.map(e => ({ ...e, alive: true }));
   enemies.forEach(e => {
@@ -1322,7 +1607,7 @@ function buildLevel(levelNum) {
   rings = data.rings.map(([z, lane]) => ({ z, lane, collected: false }));
   rings.forEach(r => {
     r.mesh = makeBananaMesh();
-    r.mesh.position.set(LANES_X[r.lane], 0.9, r.z);
+    r.mesh.position.set(LANES_X[r.lane], 1.05, r.z);
     scene.add(r.mesh);
   });
 
@@ -1333,15 +1618,69 @@ function buildLevel(levelNum) {
     scene.add(h.mesh);
   });
 
+  const levelStickers = stickersForLevel(levelNum);
+  stickerPickups = (data.stickers || []).map(([z, lane], i) => ({
+    z, lane, collected: false, def: levelStickers[i % levelStickers.length],
+  }));
+  stickerPickups.forEach(s => {
+    s.mesh = makeStickerMesh(s.def);
+    s.mesh.position.set(LANES_X[s.lane], 1.25, s.z);
+    castAll(s.mesh);
+    scene.add(s.mesh);
+  });
+
   cookies = (data.cookies || []).map(([z, lane]) => ({ z, lane, collected: false }));
   cookies.forEach(c => {
     c.mesh = makeCookieMesh();
-    c.mesh.position.set(LANES_X[c.lane], 0.95, c.z);
+    c.mesh.position.set(LANES_X[c.lane], 1.15, c.z);
     castAll(c.mesh);
     scene.add(c.mesh);
   });
 
   exitFillEl.style.width = '0%';
+}
+
+// Stone slab bursting apart, played when a chamber is cleared. Purely a DOM
+// overlay so it never competes with the WebGL frame for time.
+function playShatter() {
+  const COLS = 6, ROWS = 5;
+  shatterEl.innerHTML = '';
+  const w = 100 / COLS, h = 100 / ROWS;
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      const shard = document.createElement('div');
+      shard.className = 'shard';
+      shard.style.left = `${c * w}%`;
+      shard.style.top = `${r * h}%`;
+      shard.style.width = `${w + 0.4}%`;
+      shard.style.height = `${h + 0.4}%`;
+      // blow outward from the centre, faster at the edges
+      const dx = (c + 0.5) / COLS - 0.5;
+      const dy = (r + 0.5) / ROWS - 0.5;
+      const mag = 380 + Math.random() * 260;
+      shard.style.setProperty('--tx', `${dx * mag}px`);
+      shard.style.setProperty('--ty', `${dy * mag + 120}px`);
+      shard.style.setProperty('--rot', `${(Math.random() - 0.5) * 220}deg`);
+      shard.style.setProperty('--dur', `${820 + Math.random() * 320}ms`);
+      // random chipped corner so the pieces aren't uniform rectangles
+      const k = 8 + Math.random() * 18;
+      shard.style.clipPath = `polygon(${k}% 0%, 100% ${Math.random() * 20}%, ${100 - k * 0.6}% 100%, 0% ${80 + Math.random() * 20}%)`;
+      shatterEl.appendChild(shard);
+    }
+  }
+  shatterEl.classList.remove('hidden');
+  flashEl.classList.remove('hidden');
+  // restart the flash animation
+  flashEl.style.animation = 'none';
+  void flashEl.offsetWidth;
+  flashEl.style.animation = '';
+  sfx.shatter();
+  clearTimeout(playShatter._t);
+  playShatter._t = setTimeout(() => {
+    shatterEl.classList.add('hidden');
+    flashEl.classList.add('hidden');
+    shatterEl.innerHTML = '';
+  }, 1250);
 }
 
 function showLevelBanner(levelNum) {
@@ -1388,6 +1727,7 @@ function startNewGame() {
   player.kicking = false; player.kickTimer = 0; player.kickCd = 0;
   sparkles.forEach(s => { scene.remove(s.mesh); s.mesh.material.dispose(); });
   sparkles = [];
+  stickerPop.classList.add('hidden');
   Object.assign(player, {
     laneIndex: 1, x: LANES_X[1], y: 0, z: 0, vy: 0, onGround: true,
     sliding: false, slideTimer: 0, health: PLAYER_MAX_HEALTH, maxHealth: PLAYER_MAX_HEALTH, invuln: 0, runCycle: 0,
@@ -1412,6 +1752,7 @@ function goToNextLevel() {
   buildLevel(level);
   renderPlayerHealth();
   updateHud();
+  playShatter();
   showLevelBanner(level);
   sfx.levelUp();
 }
@@ -1433,6 +1774,13 @@ function endGame(won) {
     ? `You made it out with the Golden Banana! 🍌 ${ringCount} bananas — Score: ${score}`
     : `You got as far as ${LEVEL_DATA[(level - 1) % LEVEL_DATA.length].theme.name} — Score: ${score} — try again!`;
   renderTrophyShelf(won ? LEVEL_DATA.length : level - 1);
+  renderStickerBook();
+  // a run can end within the transition window; don't let shards sit on the results
+  clearTimeout(playShatter._t);
+  shatterEl.classList.add('hidden');
+  flashEl.classList.add('hidden');
+  shatterEl.innerHTML = '';
+  stickerPop.classList.add('hidden');
   endScreen.classList.remove('hidden');
   kickBtn.classList.add('hidden');
   chamberMapEl.classList.add('hidden');
@@ -1524,6 +1872,16 @@ function update(dt) {
 
   // gap collisions (must swerve to a different lane; jump/slide do not help)
   gaps.forEach(gp => {
+    if (gp.mesh) {
+      const ud = gp.mesh.userData;
+      const t = performance.now() * 0.001 + ud.phase;
+      // fin patrols across the gap and banks as it turns
+      ud.shark.position.x = Math.sin(t * 1.1) * 0.62;
+      ud.shark.position.z = Math.cos(t * 0.7) * 1.1;
+      ud.shark.rotation.y = Math.sin(t * 1.1 + Math.PI / 2) * 0.5;
+      ud.shark.rotation.z = Math.cos(t * 1.1) * 0.12;
+      ud.surf.position.y = -0.24 + Math.sin(t * 2.2) * 0.02;
+    }
     if (gp.hit) return;
     if (rectClose(player.z, gp.z, HAZARD_RANGE) && player.laneIndex === gp.lane) {
       gp.hit = true; damagePlayer(1);
@@ -1557,7 +1915,7 @@ function update(dt) {
   cookies.forEach(c => {
     if (c.collected) return;
     c.mesh.rotation.y += dt * 2.0;
-    c.mesh.position.y = 0.95 + Math.sin(performance.now() * 0.0035 + c.z) * 0.1;
+    c.mesh.position.y = 1.15 + Math.sin(performance.now() * 0.0035 + c.z) * 0.1;
     const sameLane = player.laneIndex === c.lane;
     if (sameLane && Math.abs(c.z - player.z) < MAGNET_RANGE) {
       const pull = Math.min(1, dt * 6);
@@ -1570,6 +1928,31 @@ function update(dt) {
       score += 50; scoreEl.textContent = score;
       spawnSparkles(c.mesh.position.x, c.mesh.position.y, c.mesh.position.z, 16, 0xffd9a0);
       sfx.cookie();
+      updateHud();
+    }
+  });
+
+  // stickers: spin, magnetise, and drop into the sticker book
+  stickerPickups.forEach(s => {
+    if (s.collected) return;
+    // rock gently rather than spin - a full spin hides the art half the time
+    const st = performance.now() * 0.0022 + s.z;
+    s.mesh.rotation.y = Math.sin(st) * 0.6;
+    s.mesh.rotation.z = Math.cos(st * 0.8) * 0.12;
+    s.mesh.position.y = 1.25 + Math.sin(st * 1.4) * 0.12;
+    const sameLane = player.laneIndex === s.lane;
+    if (sameLane && Math.abs(s.z - player.z) < MAGNET_RANGE) {
+      const pull = Math.min(1, dt * 6);
+      s.mesh.position.x += (player.x - s.mesh.position.x) * pull;
+      s.mesh.rotation.y = Math.sin(st * 4) * 0.5;
+    }
+    if (sameLane && rectClose(player.z, s.z, PICKUP_RANGE)) {
+      s.collected = true; s.mesh.visible = false;
+      if (!stickerBook.has(s.def.id)) { stickerBook.add(s.def.id); saveStickerBook(stickerBook); }
+      score += 100; scoreEl.textContent = score;
+      spawnSparkles(s.mesh.position.x, s.mesh.position.y, s.mesh.position.z, 22, 0xfff0b0);
+      sfx.sticker();
+      showStickerPop(s.def);
       updateHud();
     }
   });

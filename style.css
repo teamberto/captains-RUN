@@ -47,9 +47,9 @@ html, body {
 
 #score { font-size: 22px; }
 
-#player-health-wrap { width: min(46vw, 220px); }
+#player-health-wrap { width: min(34.5vw, 165px); }
 #player-health-track {
-  height: 18px;
+  height: 14px;
   background: rgba(10,10,15,.8);
   border: 2px solid rgba(255,255,255,.7);
   border-radius: 10px;
@@ -187,7 +187,7 @@ html, body {
 
 #level-banner {
   position: absolute;
-  top: 30%;
+  top: 26%;
   left: 50%;
   transform: translate(-50%, -50%) scale(1);
   color: #fff;
@@ -209,15 +209,15 @@ html, body {
 /* ---- chamber progress: 8 pips, one per chamber ---- */
 #chamber-map {
   position: absolute;
-  top: 42%;
+  top: 47%;
   left: 50%;
   transform: translate(-50%, -50%);
   display: flex;
-  gap: 10px;
+  gap: 6px;
   align-items: center;
   justify-content: center;
   flex-wrap: wrap;
-  max-width: 90vw;
+  max-width: min(92vw, 548px);
   pointer-events: none;
   z-index: 8;
   transition: opacity .5s ease;
@@ -329,3 +329,132 @@ html, body {
   #kick-btn { width: 78px; height: 78px; }
   #kick-btn .kick-icon { font-size: 25px; }
 }
+
+/* ---- sticker reward popup ---- */
+#sticker-pop {
+  position: absolute;
+  top: 34%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(1);
+  z-index: 9;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  pointer-events: none;
+  transition: opacity .3s ease, transform .3s ease;
+}
+#sticker-pop.hidden { opacity: 0; transform: translate(-50%, -50%) scale(.5); }
+#sticker-pop-art {
+  width: 96px;
+  height: 96px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 54px;
+  line-height: 1;
+  background: #fff;
+  border: 5px solid #fff;
+  box-shadow: 0 0 0 4px rgba(255,206,90,.9), 0 10px 26px rgba(0,0,0,.5);
+  animation: sticker-pop-spin .6s cubic-bezier(.2,1.5,.4,1);
+}
+@keyframes sticker-pop-spin {
+  0%   { transform: rotate(-24deg) scale(.4); }
+  60%  { transform: rotate(8deg) scale(1.14); }
+  100% { transform: rotate(0deg) scale(1); }
+}
+#sticker-pop-name {
+  margin-top: 8px;
+  font-size: 22px;
+  font-weight: 900;
+  color: #fff;
+  text-shadow: 0 3px 8px rgba(0,0,0,.7);
+}
+#sticker-pop-sub {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  color: #ffd98a;
+  text-shadow: 0 2px 6px rgba(0,0,0,.7);
+}
+
+/* ---- sticker book on the end screen ---- */
+.book-title {
+  font-size: 18px;
+  margin: 4px 0 0;
+  font-weight: 800;
+  color: #ffe8b0;
+}
+#book-count { font-size: 14px; opacity: .8; font-weight: 700; }
+#sticker-book {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  justify-content: center;
+  max-width: min(92vw, 520px);
+  max-height: 30vh;
+  overflow-y: auto;
+  padding: 2px;
+}
+#sticker-book .sb {
+  width: 40px;
+  height: 40px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  background: rgba(255,255,255,.07);
+  border: 2px dashed rgba(255,255,255,.22);
+  filter: grayscale(1) opacity(.32);
+}
+#sticker-book .sb.have {
+  background: #fff;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 3px rgba(255,206,90,.85);
+  filter: none;
+}
+
+/* ---- stone-slab shatter transition ---- */
+#shatter {
+  position: absolute;
+  inset: 0;
+  z-index: 9;
+  pointer-events: none;
+  overflow: hidden;
+}
+#shatter.hidden { display: none; }
+#shatter .shard {
+  position: absolute;
+  background: linear-gradient(150deg, #d8cdb8, #8d8071 55%, #5c5249);
+  border: 1px solid rgba(60,48,34,.5);
+  will-change: transform, opacity;
+  animation: shard-fly var(--dur, 900ms) cubic-bezier(.25,.6,.35,1) forwards;
+}
+@keyframes shard-fly {
+  0%   { transform: translate(0,0) rotate(0deg) scale(1); opacity: 1; }
+  12%  { transform: translate(0,0) rotate(0deg) scale(1); opacity: 1; }
+  100% {
+    transform: translate(var(--tx), var(--ty)) rotate(var(--rot)) scale(.72);
+    opacity: 0;
+  }
+}
+
+#flash {
+  position: absolute;
+  inset: 0;
+  z-index: 9;
+  pointer-events: none;
+  background: #fff;
+  animation: flash-out 460ms ease-out forwards;
+}
+#flash.hidden { display: none; }
+@keyframes flash-out {
+  0%   { opacity: .92; }
+  100% { opacity: 0; }
+}
+
+/* smaller pips once there are 15 chambers */
+.pip { width: 24px; height: 24px; font-size: 12px; }
