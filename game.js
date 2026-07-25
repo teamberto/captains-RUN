@@ -9,6 +9,8 @@ const endScreen = document.getElementById('end-screen');
 const endTitle = document.getElementById('end-title');
 const endMsg = document.getElementById('end-msg');
 const exitFillEl = document.getElementById('exit-fill');
+const chamberMapEl = document.getElementById('chamber-map');
+const trophyShelfEl = document.getElementById('trophy-shelf');
 const swipeHint = document.getElementById('swipe-hint');
 const levelBanner = document.getElementById('level-banner');
 const pauseBtn = document.getElementById('pause-btn');
@@ -26,10 +28,14 @@ const GRAVITY = 26;
 const CRATE_HEIGHT = 0.9;
 const SLIDE_DURATION = 0.55;
 const HIT_RANGE = 1.1;
+// forgiveness: collectibles reach further than hazards, so near-misses still reward
+const PICKUP_RANGE = 1.7;
+const HAZARD_RANGE = 0.95;
+const MAGNET_RANGE = 3.2;   // bananas drift toward the runner inside this distance
 const FINISH_Z = 262;
 const ROAD_LEN = FINISH_Z + 40;
 const PLAYER_MAX_HEALTH = 20;
-const HEART_HEAL_AMOUNT = 5;
+const HEART_HEAL_AMOUNT = 6;
 // slide crouch tuning, calibrated so the runner's head clears the duck-under ledges
 const SLIDE_SQUASH = 0.74;
 const SLIDE_FOOT_LIFT = 0.23;
@@ -70,7 +76,7 @@ const sfx = {
   ring: () => tone(1046, 0.08, 'sine', 0.12, 0, 1568),
   jump: () => tone(400, 0.12, 'triangle', 0.1, 0, 700),
   slide: () => tone(220, 0.1, 'triangle', 0.08, 0, 110),
-  damage: () => { noiseBurst(0.18, 0.22); tone(150, 0.25, 'sawtooth', 0.14, 0, 60); },
+  damage: () => { tone(300, 0.16, 'triangle', 0.13, 0, 150); tone(180, 0.2, 'sine', 0.1, 0.04, 110); },
   heal: () => { tone(523, 0.14, 'sine', 0.14, 0, 784); tone(659, 0.16, 'sine', 0.12, 0.08, 988); },
   levelUp: () => { [0, 0.12, 0.24, 0.36].forEach((d, i) => tone(392 * (i + 1) / 1.5, 0.2, 'square', 0.12, d)); },
   gameOver: () => { [500, 400, 300, 200].forEach((f, i) => tone(f, 0.25, 'sawtooth', 0.15, i * 0.15)); },
@@ -90,7 +96,7 @@ const LEVEL_DATA = [
     gaps: [{ z: 115, lane: 2 }, { z: 200, lane: 0 }],
     enemies: [{ z: 55, lane: 0 }, { z: 105, lane: 1 }, { z: 180, lane: 2 }],
     rings: [[15, 1], [18, 1], [21, 1], [42, 0], [45, 0], [48, 0], [95, 2], [98, 2], [101, 2], [140, 1], [143, 1], [146, 1], [190, 2], [193, 2], [196, 2]],
-    hearts: [[10, 2], [225, 1]],
+    hearts: [[10, 2], [120, 0], [225, 1]],
   },
   { // 2 - Idol Hall: deep interior, torchlit, watched by stone faces
     theme: {
@@ -104,7 +110,7 @@ const LEVEL_DATA = [
     gaps: [{ z: 75, lane: 1 }, { z: 120, lane: 0 }, { z: 210, lane: 2 }],
     enemies: [{ z: 50, lane: 1 }, { z: 100, lane: 0 }, { z: 175, lane: 1 }, { z: 215, lane: 2 }],
     rings: [[20, 2], [23, 2], [26, 2], [45, 1], [48, 1], [51, 1], [110, 0], [113, 0], [116, 0], [145, 2], [148, 2], [151, 2], [185, 1], [188, 1], [191, 1]],
-    hearts: [[10, 0], [230, 2]],
+    hearts: [[10, 0], [125, 1], [230, 2]],
   },
   { // 3 - Crystal Cavern: cool blue break from the warm halls
     theme: {
@@ -119,7 +125,7 @@ const LEVEL_DATA = [
     gaps: [{ z: 45, lane: 1 }, { z: 108, lane: 1 }, { z: 168, lane: 0 }],
     enemies: [{ z: 72, lane: 1 }, { z: 118, lane: 2 }, { z: 160, lane: 0 }, { z: 220, lane: 1 }],
     rings: [[14, 0], [17, 0], [20, 0], [52, 2], [55, 2], [58, 2], [98, 1], [101, 1], [104, 1], [138, 0], [141, 0], [144, 0], [195, 2], [198, 2], [201, 2]],
-    hearts: [[12, 1], [228, 0]],
+    hearts: [[12, 1], [128, 2], [228, 0]],
   },
   { // 4 - Lava Vault: the temple starts to burn
     theme: {
@@ -133,7 +139,7 @@ const LEVEL_DATA = [
     gaps: [{ z: 55, lane: 1 }, { z: 130, lane: 2 }, { z: 195, lane: 0 }],
     enemies: [{ z: 60, lane: 2 }, { z: 110, lane: 1 }, { z: 140, lane: 0 }, { z: 205, lane: 1 }],
     rings: [[25, 0], [28, 0], [31, 0], [80, 1], [83, 1], [86, 1], [120, 2], [123, 2], [126, 2], [150, 0], [153, 0], [156, 0], [200, 1], [203, 1], [206, 1]],
-    hearts: [[12, 1], [232, 2]],
+    hearts: [[12, 1], [118, 0], [232, 2]],
   },
   { // 5 - Flooded Cistern: ankle-deep water either side of the causeway
     theme: {
@@ -148,7 +154,7 @@ const LEVEL_DATA = [
     gaps: [{ z: 70, lane: 1 }, { z: 132, lane: 2 }, { z: 212, lane: 0 }],
     enemies: [{ z: 48, lane: 0 }, { z: 100, lane: 1 }, { z: 158, lane: 2 }, { z: 222, lane: 1 }],
     rings: [[18, 2], [21, 2], [24, 2], [62, 1], [65, 1], [68, 1], [105, 0], [108, 0], [111, 0], [150, 1], [153, 1], [156, 1], [188, 0], [191, 0], [194, 0]],
-    hearts: [[10, 1], [230, 2]],
+    hearts: [[10, 1], [126, 0], [230, 2]],
   },
   { // 6 - Golden Treasury: the hoard room, bright and gaudy
     theme: {
@@ -162,7 +168,7 @@ const LEVEL_DATA = [
     gaps: [{ z: 64, lane: 0 }, { z: 124, lane: 1 }, { z: 204, lane: 2 }],
     enemies: [{ z: 44, lane: 2 }, { z: 92, lane: 0 }, { z: 152, lane: 1 }, { z: 216, lane: 2 }],
     rings: [[13, 1], [16, 1], [19, 1], [36, 2], [39, 2], [42, 2], [86, 0], [89, 0], [92, 0], [144, 1], [147, 1], [150, 1], [182, 2], [185, 2], [188, 2], [210, 0], [213, 0]],
-    hearts: [[10, 0], [226, 1]],
+    hearts: [[10, 0], [122, 2], [226, 1]],
   },
   { // 7 - Collapsing Sanctum: the roof is coming down
     theme: {
@@ -176,7 +182,7 @@ const LEVEL_DATA = [
     gaps: [{ z: 70, lane: 0 }, { z: 110, lane: 1 }, { z: 190, lane: 2 }],
     enemies: [{ z: 45, lane: 0 }, { z: 95, lane: 1 }, { z: 125, lane: 2 }, { z: 165, lane: 0 }, { z: 218, lane: 2 }],
     rings: [[16, 2], [19, 2], [22, 2], [50, 0], [53, 0], [56, 0], [100, 1], [103, 1], [106, 1], [155, 2], [158, 2], [161, 2], [195, 0], [198, 0], [201, 0]],
-    hearts: [[10, 0], [230, 1]],
+    hearts: [[10, 0], [130, 2], [230, 1]],
   },
   { // 8 - Sky Terrace: out on the roof, daylight, the last dash
     theme: {
@@ -200,6 +206,11 @@ let level = 1;
 let score = 0;
 let ringCount = 0;
 let forwardSpeed = FORWARD_SPEED;
+let camShake = 0;        // decays after a bump
+let landSquash = 0;      // decays after touching down
+let wasOnGround = true;  // to detect the landing frame
+let sparkles = [];       // short-lived pickup burst particles
+let playerSquashY = 1;   // slide squash, kept off the mesh so land squash can stack
 
 // ---------- game state ----------
 const player = {
@@ -1000,6 +1011,46 @@ const bananaGeo = makeBananaGeometry();
 const bananaMat = new THREE.MeshStandardMaterial({ map: bananaTex, roughness: 0.52, metalness: 0.04 });
 const bananaStemMat = new THREE.MeshStandardMaterial({ color: 0x4e3a18, roughness: 0.8 });
 
+// short-lived sparkle burst when something is picked up
+const sparkleGeo = new THREE.SphereGeometry(0.07, 6, 6);
+const sparkleMat = new THREE.MeshStandardMaterial({
+  color: 0xfff0a0, emissive: 0xffd23a, emissiveIntensity: 2.4,
+  transparent: true, opacity: 1,
+});
+function spawnSparkles(x, y, z, count = 9, tint) {
+  for (let i = 0; i < count; i++) {
+    const mat = sparkleMat.clone();
+    if (tint !== undefined) { mat.color.set(tint); mat.emissive.set(tint); }
+    const m = new THREE.Mesh(sparkleGeo, mat);
+    m.position.set(x, y, z);
+    scene.add(m);
+    sparkles.push({
+      mesh: m, life: 0, ttl: 0.42 + Math.random() * 0.2,
+      vx: (Math.random() - 0.5) * 3.2,
+      vy: 1.6 + Math.random() * 2.4,
+      vz: (Math.random() - 0.5) * 3.2,
+    });
+  }
+}
+function updateSparkles(dt) {
+  sparkles.forEach(s => {
+    s.life += dt;
+    s.vy -= 9 * dt;
+    s.mesh.position.x += s.vx * dt;
+    s.mesh.position.y += s.vy * dt;
+    s.mesh.position.z += s.vz * dt;
+    const k = Math.max(0, 1 - s.life / s.ttl);
+    s.mesh.scale.setScalar(0.4 + k * 0.9);
+    s.mesh.material.opacity = k;
+  });
+  sparkles = sparkles.filter(s => {
+    if (s.life < s.ttl) return true;
+    scene.remove(s.mesh);
+    s.mesh.material.dispose();
+    return false;
+  });
+}
+
 function makeBananaMesh() {
   const g = new THREE.Group();
   const body = new THREE.Mesh(bananaGeo, bananaMat);
@@ -1145,14 +1196,47 @@ function buildLevel(levelNum) {
 
 function showLevelBanner(levelNum) {
   const theme = LEVEL_DATA[(levelNum - 1) % LEVEL_DATA.length].theme;
-  levelBanner.textContent = `LEVEL ${levelNum} — ${theme.name}`;
+  levelBanner.textContent = `CHAMBER ${levelNum} of ${LEVEL_DATA.length} — ${theme.name}`;
   levelBanner.classList.remove('hidden');
+  renderChamberMap(levelNum);
+  chamberMapEl.classList.remove('hidden');
   clearTimeout(showLevelBanner._t);
-  showLevelBanner._t = setTimeout(() => levelBanner.classList.add('hidden'), 2600);
+  showLevelBanner._t = setTimeout(() => {
+    levelBanner.classList.add('hidden');
+    chamberMapEl.classList.add('hidden');
+  }, 2600);
+}
+
+// one pip per chamber: cleared ones show a banana, the current one pulses
+function renderChamberMap(levelNum) {
+  chamberMapEl.innerHTML = '';
+  LEVEL_DATA.forEach((_, i) => {
+    const pip = document.createElement('div');
+    const n = i + 1;
+    pip.className = 'pip' + (n < levelNum ? ' done' : n === levelNum ? ' current' : '');
+    pip.textContent = n < levelNum ? '🍌' : String(n);
+    pip.title = LEVEL_DATA[i].theme.name;
+    chamberMapEl.appendChild(pip);
+  });
+}
+
+// end-screen shelf: how many chambers were cleared this run
+function renderTrophyShelf(clearedCount) {
+  trophyShelfEl.innerHTML = '';
+  LEVEL_DATA.forEach((lv, i) => {
+    const slot = document.createElement('div');
+    slot.className = 'slot' + (i < clearedCount ? ' won' : '');
+    slot.textContent = '🍌';
+    slot.title = lv.theme.name;
+    trophyShelfEl.appendChild(slot);
+  });
 }
 
 function startNewGame() {
   level = 1; score = 0; ringCount = 0;
+  camShake = 0; landSquash = 0; playerSquashY = 1; wasOnGround = true;
+  sparkles.forEach(s => { scene.remove(s.mesh); s.mesh.material.dispose(); });
+  sparkles = [];
   Object.assign(player, {
     laneIndex: 1, x: LANES_X[1], y: 0, z: 0, vy: 0, onGround: true,
     sliding: false, slideTimer: 0, health: PLAYER_MAX_HEALTH, maxHealth: PLAYER_MAX_HEALTH, invuln: 0, runCycle: 0,
@@ -1161,6 +1245,7 @@ function startNewGame() {
   scoreEl.textContent = score;
   renderPlayerHealth();
   updateHud();
+  showLevelBanner(level);
   swipeHint.classList.remove('hidden');
 }
 
@@ -1183,7 +1268,9 @@ function goToNextLevel() {
 function damagePlayer(n) {
   if (player.invuln > 0) return;
   player.health -= n;
-  player.invuln = 1.3;
+  player.invuln = 1.5;
+  camShake = 0.34;
+  spawnSparkles(playerMesh.position.x, playerMesh.position.y + 0.9, playerMesh.position.z, 7, 0xffb0b0);
   renderPlayerHealth();
   sfx.damage();
 }
@@ -1194,7 +1281,11 @@ function endGame(won) {
   endMsg.textContent = won
     ? `You made it out with the Golden Banana! 🍌 ${ringCount} bananas — Score: ${score}`
     : `You got as far as ${LEVEL_DATA[(level - 1) % LEVEL_DATA.length].theme.name} — Score: ${score} — try again!`;
+  renderTrophyShelf(won ? LEVEL_DATA.length : level - 1);
   endScreen.classList.remove('hidden');
+  chamberMapEl.classList.add('hidden');
+  levelBanner.classList.add('hidden');
+  clearTimeout(showLevelBanner._t);
   pauseBtn.classList.add('hidden');
   if (won) sfx.levelUp(); else sfx.gameOver();
 }
@@ -1238,7 +1329,7 @@ function update(dt) {
   // crate collisions (must jump; pass-through damage, no wall-blocking)
   crates.forEach(c => {
     if (c.hit) return;
-    if (rectClose(player.z, c.z, HIT_RANGE) && player.laneIndex === c.lane && player.y < CRATE_HEIGHT) {
+    if (rectClose(player.z, c.z, HAZARD_RANGE) && player.laneIndex === c.lane && player.y < CRATE_HEIGHT) {
       c.hit = true; c.mesh.visible = false; damagePlayer(1);
     }
   });
@@ -1246,7 +1337,7 @@ function update(dt) {
   // bar collisions (must slide)
   bars.forEach(b => {
     if (b.hit) return;
-    if (rectClose(player.z, b.z, HIT_RANGE) && player.laneIndex === b.lane && !player.sliding) {
+    if (rectClose(player.z, b.z, HAZARD_RANGE) && player.laneIndex === b.lane && !player.sliding) {
       b.hit = true; b.mesh.visible = false; damagePlayer(1);
     }
   });
@@ -1254,7 +1345,7 @@ function update(dt) {
   // gap collisions (must swerve to a different lane; jump/slide do not help)
   gaps.forEach(gp => {
     if (gp.hit) return;
-    if (rectClose(player.z, gp.z, HIT_RANGE) && player.laneIndex === gp.lane) {
+    if (rectClose(player.z, gp.z, HAZARD_RANGE) && player.laneIndex === gp.lane) {
       gp.hit = true; damagePlayer(1);
     }
   });
@@ -1263,10 +1354,20 @@ function update(dt) {
   rings.forEach(r => {
     if (r.collected) { return; }
     r.mesh.rotation.y += dt * 3;
-    if (rectClose(player.z, r.z, HIT_RANGE) && player.laneIndex === r.lane) {
+    const dz = r.z - player.z;
+    const sameLane = player.laneIndex === r.lane;
+    // magnet: once you're close and in the right lane, the banana comes to you
+    if (sameLane && Math.abs(dz) < MAGNET_RANGE) {
+      const pull = Math.min(1, dt * 7);
+      r.mesh.position.x += (player.x - r.mesh.position.x) * pull;
+      r.mesh.position.y += ((player.y + 0.85) - r.mesh.position.y) * pull;
+      r.mesh.rotation.y += dt * 9;
+    }
+    if (sameLane && Math.abs(dz) < PICKUP_RANGE) {
       r.collected = true; r.mesh.visible = false;
       ringCount += 1;
       score += 5; scoreEl.textContent = score;
+      spawnSparkles(r.mesh.position.x, r.mesh.position.y, r.mesh.position.z, 9, 0xffd23a);
       sfx.ring();
       updateHud();
     }
@@ -1277,10 +1378,11 @@ function update(dt) {
     if (h.collected) return;
     h.mesh.rotation.y += dt * 2.4;
     h.mesh.position.y = 0.9 + Math.sin(performance.now() * 0.004 + h.z) * 0.08;
-    if (rectClose(player.z, h.z, HIT_RANGE) && player.laneIndex === h.lane) {
+    if (rectClose(player.z, h.z, PICKUP_RANGE) && player.laneIndex === h.lane) {
       h.collected = true; h.mesh.visible = false;
       player.health = Math.min(player.maxHealth, player.health + HEART_HEAL_AMOUNT);
       renderPlayerHealth();
+      spawnSparkles(h.mesh.position.x, h.mesh.position.y, h.mesh.position.z, 11, 0x7dff8a);
       sfx.heal();
     }
   });
@@ -1291,7 +1393,7 @@ function update(dt) {
     e.mesh.rotation.y += dt * 4;
     const flick = 1.4 + Math.sin(performance.now() * 0.01 + e.z) * 0.3;
     e.mesh.children[0].material.emissiveIntensity = flick;
-    if (player.invuln <= 0 && rectClose(player.z, e.z, HIT_RANGE) && player.laneIndex === e.lane) {
+    if (player.invuln <= 0 && rectClose(player.z, e.z, HAZARD_RANGE) && player.laneIndex === e.lane) {
       e.alive = false; e.mesh.visible = false;
       damagePlayer(1);
     }
@@ -1310,11 +1412,22 @@ function update(dt) {
   // squash on the slide so the crouch actually passes under the rock ledges;
   // the drop is derived from the squash so the feet stay planted mid-transition
   const targetSquash = player.sliding ? SLIDE_SQUASH : 1;
-  playerMesh.scale.y += (targetSquash - playerMesh.scale.y) * Math.min(1, dt * 16);
-  const squashT = (1 - playerMesh.scale.y) / (1 - SLIDE_SQUASH);
+  playerSquashY += (targetSquash - playerSquashY) * Math.min(1, dt * 16);
+  const squashT = (1 - playerSquashY) / (1 - SLIDE_SQUASH);
   const slideDrop = squashT * SLIDE_FOOT_LIFT;
   const bob = moving ? Math.abs(Math.sin(s)) * 0.075 : 0;
   playerMesh.position.set(player.x, player.y + bob - slideDrop, player.z);
+
+  // landing impact squash, and a slight stretch while rising through a jump
+  if (player.onGround && !wasOnGround) { landSquash = 1; spawnSparkles(player.x, 0.12, player.z, 5, 0xe8dcc0); }
+  wasOnGround = player.onGround;
+  landSquash = Math.max(0, landSquash - dt * 4.5);
+  const stretch = !player.onGround ? Math.max(-0.05, Math.min(0.08, player.vy * 0.011)) : 0;
+  playerMesh.scale.set(
+    1 + landSquash * 0.2 - stretch * 0.5,
+    playerSquashY * (1 - landSquash * 0.24) * (1 + stretch),
+    1 + landSquash * 0.2 - stretch * 0.5,
+  );
   // banking into the lane change reads as weight shift
   const bankTarget = (player.x - LANES_X[player.laneIndex]) * 0.08;
   playerMesh.rotation.z += (bankTarget - playerMesh.rotation.z) * Math.min(1, dt * 8);
@@ -1375,6 +1488,13 @@ function update(dt) {
   camera.position.z = player.z - CAMERA_DISTANCE;
   camera.lookAt(player.x, player.y + 0.85, player.z + 12);
   camera.rotateZ((camTargetX - camera.position.x) * -0.015);
+  if (camShake > 0) {
+    camShake = Math.max(0, camShake - dt * 1.6);
+    camera.position.x += (Math.random() - 0.5) * camShake;
+    camera.position.y += (Math.random() - 0.5) * camShake;
+  }
+
+  updateSparkles(dt);
 
   // sun follows player for tight shadow frustum
   sun.position.set(player.x - 18, player.y + 26, player.z - 14);

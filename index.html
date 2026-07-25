@@ -33,18 +33,23 @@
 
     <div id="level-banner" class="hidden"></div>
 
+    <!-- how far through the 8 chambers you are; also shown on the end screen -->
+    <div id="chamber-map" class="hidden"></div>
+
     <button id="pause-btn" class="hidden">⏸</button>
 
     <div id="start-screen" class="overlay">
       <h1>LOST <span class="num">TEMPLE</span> DASH</h1>
       <p class="story">You grabbed the Golden Banana — and the whole temple is coming down behind you.</p>
       <p>Swipe left/right to dodge, swipe up to jump, swipe down to slide. Grab bananas and reach the exit!</p>
+      <p class="quest">🍌 Escape all 8 chambers to win the Golden Banana.</p>
       <button id="start-btn">▶ PLAY</button>
     </div>
 
     <div id="end-screen" class="overlay hidden">
       <h1 id="end-title">Game Over</h1>
       <p id="end-msg"></p>
+      <div id="trophy-shelf"></div>
       <button id="retry-btn">↻ PLAY AGAIN</button>
     </div>
 
