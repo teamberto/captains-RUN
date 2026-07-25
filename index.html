@@ -20,6 +20,7 @@
         <div id="sub-stats">
           <span id="level-val">LV 1</span>
           <span id="ring-val">🍌 0</span>
+          <span id="cookie-val">🍪 0</span>
         </div>
       </div>
       <div id="exit-wrap">
@@ -38,11 +39,18 @@
 
     <button id="pause-btn" class="hidden">⏸</button>
 
+    <!-- spin-kick: big thumb target on touch; tap anywhere and Space also work -->
+    <button id="kick-btn" class="hidden" aria-label="Spin kick">
+      <span class="kick-icon">🌀</span>
+      <span class="kick-label">KICK</span>
+    </button>
+
     <div id="start-screen" class="overlay">
       <h1>LOST <span class="num">TEMPLE</span> DASH</h1>
       <p class="story">You grabbed the Golden Banana — and the whole temple is coming down behind you.</p>
-      <p>Swipe left/right to dodge, swipe up to jump, swipe down to slide. Grab bananas and reach the exit!</p>
-      <p class="quest">🍌 Escape all 8 chambers to win the Golden Banana.</p>
+      <p>Swipe left/right to dodge, swipe up to jump, swipe down to slide.<br />
+         <strong>Tap the screen</strong> (or the 🌀 button, or Space) for a spinning kick that smashes rocks!</p>
+      <p class="quest">🍌 Grab bananas, find the 🍪 cookies, escape all 8 chambers.</p>
       <button id="start-btn">▶ PLAY</button>
     </div>
 
@@ -58,7 +66,7 @@
       <button id="resume-btn">▶ RESUME</button>
     </div>
 
-    <div id="swipe-hint" class="hidden">⬅ swipe ➡ &nbsp;·&nbsp; ⬆ jump &nbsp;·&nbsp; ⬇ slide</div>
+    <div id="swipe-hint" class="hidden">⬅ swipe ➡ &nbsp;·&nbsp; ⬆ jump &nbsp;·&nbsp; ⬇ slide &nbsp;·&nbsp; tap 🌀 kick</div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>

@@ -9,12 +9,14 @@ const endScreen = document.getElementById('end-screen');
 const endTitle = document.getElementById('end-title');
 const endMsg = document.getElementById('end-msg');
 const exitFillEl = document.getElementById('exit-fill');
+const cookieValEl = document.getElementById('cookie-val');
 const chamberMapEl = document.getElementById('chamber-map');
 const trophyShelfEl = document.getElementById('trophy-shelf');
 const swipeHint = document.getElementById('swipe-hint');
 const levelBanner = document.getElementById('level-banner');
 const pauseBtn = document.getElementById('pause-btn');
 const pauseScreen = document.getElementById('pause-screen');
+const kickBtn = document.getElementById('kick-btn');
 
 let state = 'start'; // start | playing | win | lose
 
@@ -31,6 +33,10 @@ const HIT_RANGE = 1.1;
 // forgiveness: collectibles reach further than hazards, so near-misses still reward
 const PICKUP_RANGE = 1.7;
 const HAZARD_RANGE = 0.95;
+const FIRE_CLEAR_Y = 0.9;   // flames reach ~0.70, so clearing them is generous
+const KICK_DURATION = 0.42;
+const KICK_COOLDOWN = 0.5;
+const KICK_RANGE = 1.9;     // longer than HAZARD_RANGE so the kick lands before contact
 const MAGNET_RANGE = 3.2;   // bananas drift toward the runner inside this distance
 const FINISH_Z = 262;
 const ROAD_LEN = FINISH_Z + 40;
@@ -74,6 +80,9 @@ function noiseBurst(dur, vol) {
 }
 const sfx = {
   ring: () => tone(1046, 0.08, 'sine', 0.12, 0, 1568),
+  cookie: () => { [523, 659, 784, 1046].forEach((f, i) => tone(f, 0.16, 'sine', 0.13, i * 0.06)); },
+  kick: () => { noiseBurst(0.1, 0.1); tone(420, 0.13, 'triangle', 0.1, 0, 780); },
+  smash: () => { noiseBurst(0.26, 0.26); tone(140, 0.28, 'sawtooth', 0.16, 0, 55); },
   jump: () => tone(400, 0.12, 'triangle', 0.1, 0, 700),
   slide: () => tone(220, 0.1, 'triangle', 0.08, 0, 110),
   damage: () => { tone(300, 0.16, 'triangle', 0.13, 0, 150); tone(180, 0.2, 'sine', 0.1, 0.04, 110); },
@@ -97,6 +106,7 @@ const LEVEL_DATA = [
     enemies: [{ z: 55, lane: 0 }, { z: 105, lane: 1 }, { z: 180, lane: 2 }],
     rings: [[15, 1], [18, 1], [21, 1], [42, 0], [45, 0], [48, 0], [95, 2], [98, 2], [101, 2], [140, 1], [143, 1], [146, 1], [190, 2], [193, 2], [196, 2]],
     hearts: [[10, 2], [120, 0], [225, 1]],
+    cookies: [[68, 0], [178, 2]],
   },
   { // 2 - Idol Hall: deep interior, torchlit, watched by stone faces
     theme: {
@@ -111,6 +121,7 @@ const LEVEL_DATA = [
     enemies: [{ z: 50, lane: 1 }, { z: 100, lane: 0 }, { z: 175, lane: 1 }, { z: 215, lane: 2 }],
     rings: [[20, 2], [23, 2], [26, 2], [45, 1], [48, 1], [51, 1], [110, 0], [113, 0], [116, 0], [145, 2], [148, 2], [151, 2], [185, 1], [188, 1], [191, 1]],
     hearts: [[10, 0], [125, 1], [230, 2]],
+    cookies: [[82, 2], [196, 1]],
   },
   { // 3 - Crystal Cavern: cool blue break from the warm halls
     theme: {
@@ -126,6 +137,7 @@ const LEVEL_DATA = [
     enemies: [{ z: 72, lane: 1 }, { z: 118, lane: 2 }, { z: 160, lane: 0 }, { z: 220, lane: 1 }],
     rings: [[14, 0], [17, 0], [20, 0], [52, 2], [55, 2], [58, 2], [98, 1], [101, 1], [104, 1], [138, 0], [141, 0], [144, 0], [195, 2], [198, 2], [201, 2]],
     hearts: [[12, 1], [128, 2], [228, 0]],
+    cookies: [[76, 1], [188, 0]],
   },
   { // 4 - Lava Vault: the temple starts to burn
     theme: {
@@ -140,6 +152,7 @@ const LEVEL_DATA = [
     enemies: [{ z: 60, lane: 2 }, { z: 110, lane: 1 }, { z: 140, lane: 0 }, { z: 205, lane: 1 }],
     rings: [[25, 0], [28, 0], [31, 0], [80, 1], [83, 1], [86, 1], [120, 2], [123, 2], [126, 2], [150, 0], [153, 0], [156, 0], [200, 1], [203, 1], [206, 1]],
     hearts: [[12, 1], [118, 0], [232, 2]],
+    cookies: [[88, 0], [176, 2]],
   },
   { // 5 - Flooded Cistern: ankle-deep water either side of the causeway
     theme: {
@@ -155,6 +168,7 @@ const LEVEL_DATA = [
     enemies: [{ z: 48, lane: 0 }, { z: 100, lane: 1 }, { z: 158, lane: 2 }, { z: 222, lane: 1 }],
     rings: [[18, 2], [21, 2], [24, 2], [62, 1], [65, 1], [68, 1], [105, 0], [108, 0], [111, 0], [150, 1], [153, 1], [156, 1], [188, 0], [191, 0], [194, 0]],
     hearts: [[10, 1], [126, 0], [230, 2]],
+    cookies: [[92, 2], [166, 1]],
   },
   { // 6 - Golden Treasury: the hoard room, bright and gaudy
     theme: {
@@ -169,6 +183,7 @@ const LEVEL_DATA = [
     enemies: [{ z: 44, lane: 2 }, { z: 92, lane: 0 }, { z: 152, lane: 1 }, { z: 216, lane: 2 }],
     rings: [[13, 1], [16, 1], [19, 1], [36, 2], [39, 2], [42, 2], [86, 0], [89, 0], [92, 0], [144, 1], [147, 1], [150, 1], [182, 2], [185, 2], [188, 2], [210, 0], [213, 0]],
     hearts: [[10, 0], [122, 2], [226, 1]],
+    cookies: [[58, 1], [158, 0], [200, 2]],
   },
   { // 7 - Collapsing Sanctum: the roof is coming down
     theme: {
@@ -183,6 +198,7 @@ const LEVEL_DATA = [
     enemies: [{ z: 45, lane: 0 }, { z: 95, lane: 1 }, { z: 125, lane: 2 }, { z: 165, lane: 0 }, { z: 218, lane: 2 }],
     rings: [[16, 2], [19, 2], [22, 2], [50, 0], [53, 0], [56, 0], [100, 1], [103, 1], [106, 1], [155, 2], [158, 2], [161, 2], [195, 0], [198, 0], [201, 0]],
     hearts: [[10, 0], [130, 2], [230, 1]],
+    cookies: [[74, 2], [184, 1]],
   },
   { // 8 - Sky Terrace: out on the roof, daylight, the last dash
     theme: {
@@ -198,6 +214,7 @@ const LEVEL_DATA = [
     enemies: [{ z: 38, lane: 0 }, { z: 88, lane: 2 }, { z: 140, lane: 1 }, { z: 176, lane: 0 }, { z: 220, lane: 2 }],
     rings: [[12, 1], [15, 1], [18, 1], [32, 0], [35, 0], [38, 0], [80, 2], [83, 2], [86, 2], [134, 0], [137, 0], [140, 0], [170, 1], [173, 1], [176, 1], [212, 2], [215, 2]],
     hearts: [[10, 1], [200, 2], [232, 0]],
+    cookies: [[66, 0], [148, 2], [206, 1]],
   },
 ];
 
@@ -205,18 +222,21 @@ const LEVEL_DATA = [
 let level = 1;
 let score = 0;
 let ringCount = 0;
+let cookieCount = 0;
 let forwardSpeed = FORWARD_SPEED;
 let camShake = 0;        // decays after a bump
 let landSquash = 0;      // decays after touching down
 let wasOnGround = true;  // to detect the landing frame
 let sparkles = [];       // short-lived pickup burst particles
 let playerSquashY = 1;   // slide squash, kept off the mesh so land squash can stack
+let kickBtnReady = true; // tracks the button's dim state so we only touch the DOM on change
 
 // ---------- game state ----------
 const player = {
   laneIndex: 1, x: LANES_X[1], y: 0, z: 0, vy: 0, onGround: true,
   sliding: false, slideTimer: 0,
   health: PLAYER_MAX_HEALTH, maxHealth: PLAYER_MAX_HEALTH, invuln: 0, runCycle: 0,
+  kicking: false, kickTimer: 0, kickCd: 0,
 };
 let crates = [];
 let bars = [];
@@ -224,6 +244,7 @@ let gaps = [];
 let enemies = [];
 let rings = [];
 let heartPickups = [];
+let cookies = [];
 
 // ---------- input: swipe gestures ----------
 function shiftLane(dir) {
@@ -234,6 +255,13 @@ function tryJump() {
 }
 function trySlide() {
   if (player.onGround && !player.sliding) { player.sliding = true; player.slideTimer = SLIDE_DURATION; sfx.slide(); }
+}
+function tryKick() {
+  if (!player.onGround || player.sliding || player.kicking || player.kickCd > 0) return;
+  player.kicking = true;
+  player.kickTimer = KICK_DURATION;
+  player.kickCd = KICK_DURATION + KICK_COOLDOWN;
+  sfx.kick();
 }
 function dismissHint() {
   if (!swipeHint.classList.contains('hidden')) swipeHint.classList.add('hidden');
@@ -248,7 +276,7 @@ window.addEventListener('pointerup', e => {
   touchStart = null;
   if (state !== 'playing') return;
   const absX = Math.abs(dx), absY = Math.abs(dy);
-  if (Math.max(absX, absY) < 30) return;
+  if (Math.max(absX, absY) < 30) { dismissHint(); tryKick(); return; }
   dismissHint();
   if (absX > absY) shiftLane(dx > 0 ? 1 : -1);
   else if (dy < 0) tryJump();
@@ -262,6 +290,7 @@ window.addEventListener('keydown', e => {
   if (['ArrowRight', 'd', 'D'].includes(e.key) && !e.repeat) { shiftLane(1); dismissHint(); }
   if (['ArrowUp', 'w', 'W'].includes(e.key) && !e.repeat) { tryJump(); dismissHint(); }
   if (['ArrowDown', 's', 'S'].includes(e.key) && !e.repeat) { trySlide(); dismissHint(); }
+  if ([' ', 'Spacebar', 'k', 'K'].includes(e.key) && !e.repeat) { e.preventDefault(); tryKick(); dismissHint(); }
 });
 
 // ---------- three.js setup ----------
@@ -912,28 +941,62 @@ const playerMesh = buildRunner(0.82);
 scene.add(playerMesh);
 
 // ---------- fireball enemies ----------
-// temple fire trap: a jet of flame erupting from a floor grate - dodge it
-function makeFireballMesh() {
+// Temple fire vent. Deliberately LOW and WIDE so it reads as jumpable at a
+// glance, with a scorch ring on the floor telegraphing it from a distance.
+// Flames top out around y=0.70; FIRE_CLEAR_Y is the height that clears them.
+function makeFireTrapMesh(theme) {
   const g = new THREE.Group();
-  const core = new THREE.Mesh(new THREE.SphereGeometry(0.42, 14, 14), new THREE.MeshStandardMaterial({ color: 0xff8a1a, emissive: 0xff5a00, emissiveIntensity: 1.8, roughness: 0.35 }));
-  core.scale.y = 1.15;
-  g.add(core);
-  const flameMat = new THREE.MeshStandardMaterial({ color: 0xffc247, emissive: 0xff8a1a, emissiveIntensity: 2.0, transparent: true, opacity: 0.85 });
+
+  // scorch ring - visible long before the flames resolve
+  const scorch = new THREE.Mesh(
+    new THREE.CircleGeometry(0.98, 22),
+    new THREE.MeshStandardMaterial({ color: 0x160f0a, roughness: 1, transparent: true, opacity: 0.8 }),
+  );
+  scorch.rotation.x = -Math.PI / 2;
+  scorch.position.y = 0.025;
+  g.add(scorch);
+
+  // iron grate the fire pours through
+  const grateMat = new THREE.MeshStandardMaterial({ color: 0x33291f, roughness: 0.85, metalness: 0.35 });
+  const rim = new THREE.Mesh(new THREE.CylinderGeometry(0.56, 0.62, 0.11, 14), grateMat);
+  rim.position.y = 0.055;
+  g.add(rim);
+  for (let i = -1; i <= 1; i++) {
+    const slat = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.05, 0.09), grateMat);
+    slat.position.set(0, 0.11, i * 0.24);
+    g.add(slat);
+  }
+
+  // flame cluster, kept low and splayed outward
+  const flames = new THREE.Group();
+  const hotMat = new THREE.MeshStandardMaterial({
+    color: 0xffd066, emissive: 0xff8a12, emissiveIntensity: 2.3,
+    transparent: true, opacity: 0.95,
+  });
+  const coolMat = new THREE.MeshStandardMaterial({
+    color: theme && theme.torchColor ? theme.torchColor : 0xff6a1a,
+    emissive: theme && theme.torchColor ? theme.torchColor : 0xff4a08,
+    emissiveIntensity: 1.9, transparent: true, opacity: 0.78,
+  });
+
+  const base = new THREE.Mesh(new THREE.SphereGeometry(0.44, 14, 10), coolMat);
+  base.scale.set(1, 0.48, 1);
+  base.position.y = 0.2;
+  flames.add(base);
+  const core = new THREE.Mesh(new THREE.ConeGeometry(0.24, 0.52, 8), hotMat);
+  core.position.y = 0.42;
+  flames.add(core);
   for (let i = 0; i < 6; i++) {
     const ang = (i / 6) * Math.PI * 2;
-    const tongue = new THREE.Mesh(new THREE.ConeGeometry(0.15, 0.62, 6), flameMat);
-    tongue.position.set(Math.cos(ang) * 0.24, 0.34 + (i % 2) * 0.16, Math.sin(ang) * 0.24);
-    tongue.rotation.set(Math.sin(ang) * 0.32, 0, -Math.cos(ang) * 0.32);
-    g.add(tongue);
+    const tongue = new THREE.Mesh(new THREE.ConeGeometry(0.13, 0.36 + (i % 2) * 0.1, 6), coolMat);
+    tongue.position.set(Math.cos(ang) * 0.27, 0.26 + (i % 2) * 0.05, Math.sin(ang) * 0.27);
+    tongue.rotation.set(Math.sin(ang) * 0.55, 0, -Math.cos(ang) * 0.55);
+    flames.add(tongue);
   }
-  const crown = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.7, 8), flameMat);
-  crown.position.y = 0.62;
-  g.add(crown);
-  // scorched grate the flame pours out of
-  const grate = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.55, 0.12, 10), new THREE.MeshStandardMaterial({ color: 0x2e2018, roughness: 0.95 }));
-  grate.position.y = -0.5;
-  g.add(grate);
-  g.position.y = 0.55;
+  g.add(flames);
+
+  g.userData.flames = flames;
+  g.userData.glow = [base, core];
   return g;
 }
 
@@ -1017,10 +1080,11 @@ const sparkleMat = new THREE.MeshStandardMaterial({
   color: 0xfff0a0, emissive: 0xffd23a, emissiveIntensity: 2.4,
   transparent: true, opacity: 1,
 });
-function spawnSparkles(x, y, z, count = 9, tint) {
+function spawnSparkles(x, y, z, count = 9, tint, emissiveIntensity) {
   for (let i = 0; i < count; i++) {
     const mat = sparkleMat.clone();
     if (tint !== undefined) { mat.color.set(tint); mat.emissive.set(tint); }
+    if (emissiveIntensity !== undefined) mat.emissiveIntensity = emissiveIntensity;
     const m = new THREE.Mesh(sparkleGeo, mat);
     m.position.set(x, y, z);
     scene.add(m);
@@ -1070,6 +1134,55 @@ function makeBananaMesh() {
   return g;
 }
 
+// ---------- bonus pickup: chocolate chip cookie ----------
+const cookieDoughMat = new THREE.MeshStandardMaterial({ color: 0xb0692a, roughness: 0.8, emissive: 0x3a1f06, emissiveIntensity: 0.5 });
+const cookieBakedMat = new THREE.MeshStandardMaterial({ color: 0x8a4f1e, roughness: 0.9 });
+const chocolateMat = new THREE.MeshStandardMaterial({ color: 0x2a1408, roughness: 0.5 });
+
+function makeCookieMesh() {
+  const g = new THREE.Group();
+  // slightly domed, slightly irregular disc so it doesn't read as a coin
+  const disc = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.34, 0.11, 18), cookieDoughMat);
+  g.add(disc);
+  const dome = new THREE.Mesh(new THREE.SphereGeometry(0.35, 16, 10), cookieDoughMat);
+  dome.scale.set(1, 0.3, 1);
+  dome.position.y = 0.035;
+  g.add(dome);
+  const baseShade = new THREE.Mesh(new THREE.CylinderGeometry(0.355, 0.335, 0.03, 18), cookieBakedMat);
+  baseShade.position.y = -0.055;
+  g.add(baseShade);
+  // knobbly baked edge
+  for (let i = 0; i < 9; i++) {
+    const ang = (i / 9) * Math.PI * 2;
+    const lump = new THREE.Mesh(new THREE.SphereGeometry(0.07 + Math.random() * 0.03, 8, 6), cookieDoughMat);
+    lump.scale.y = 0.55;
+    lump.position.set(Math.cos(ang) * 0.33, 0.01, Math.sin(ang) * 0.33);
+    g.add(lump);
+  }
+  // chips on the face, plus a couple peeking out of the rim
+  [[0.0, 0.12], [-0.16, -0.08], [0.17, -0.05], [0.08, 0.22], [-0.2, 0.14], [0.22, 0.16]].forEach(([cx, cz], i) => {
+    const chip = new THREE.Mesh(new THREE.SphereGeometry(0.062, 8, 6), chocolateMat);
+    chip.scale.set(1, 0.8, 1);
+    chip.position.set(cx, 0.07, cz);
+    chip.rotation.y = i;
+    g.add(chip);
+  });
+  [[0.3, -0.14], [-0.28, 0.2]].forEach(([cx, cz]) => {
+    const chip = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 6), chocolateMat);
+    chip.position.set(cx, 0.02, cz);
+    g.add(chip);
+  });
+  // soft halo so the prize is spottable from down the corridor
+  const halo = new THREE.Mesh(
+    new THREE.SphereGeometry(0.56, 14, 12),
+    new THREE.MeshBasicMaterial({ color: 0xffd070, transparent: true, opacity: 0.16 }),
+  );
+  halo.scale.y = 0.62;
+  g.add(halo);
+  g.rotation.x = -0.35;   // tip it toward the camera so the chips read
+  return g;
+}
+
 function makeHeartMesh() {
   const g = new THREE.Group();
   const heartMat = new THREE.MeshStandardMaterial({ color: 0xff3355, emissive: 0xaa0022, emissiveIntensity: 0.9, roughness: 0.3, metalness: 0.1 });
@@ -1093,6 +1206,7 @@ function renderPlayerHealth() {
 function updateHud() {
   levelValEl.textContent = `LV ${level}`;
   ringValEl.textContent = `🍌 ${ringCount}`;
+  cookieValEl.textContent = `🍪 ${cookieCount}`;
 }
 
 function rectClose(z1, z2, range) { return Math.abs(z1 - z2) < range; }
@@ -1112,6 +1226,7 @@ function buildLevel(levelNum) {
   enemies.forEach(e => { scene.remove(e.mesh); disposeObject(e.mesh); });
   rings.forEach(r => { scene.remove(r.mesh); disposeObject(r.mesh); });
   heartPickups.forEach(h => { scene.remove(h.mesh); disposeObject(h.mesh); });
+  cookies.forEach(c => { scene.remove(c.mesh); disposeObject(c.mesh); });
 
   const rockMat = new THREE.MeshStandardMaterial({ color: theme.rock, roughness: 0.95 });
   const rockMossMat = new THREE.MeshStandardMaterial({ color: 0x6a8a4a, roughness: 0.9 });
@@ -1171,8 +1286,8 @@ function buildLevel(levelNum) {
 
   enemies = data.enemies.map(e => ({ ...e, alive: true }));
   enemies.forEach(e => {
-    e.mesh = makeFireballMesh();
-    e.mesh.position.set(LANES_X[e.lane], 0.55, e.z);
+    e.mesh = makeFireTrapMesh(theme);
+    e.mesh.position.set(LANES_X[e.lane], 0, e.z);
     castAll(e.mesh);
     scene.add(e.mesh);
   });
@@ -1189,6 +1304,14 @@ function buildLevel(levelNum) {
     h.mesh = makeHeartMesh();
     h.mesh.position.set(LANES_X[h.lane], 0.9, h.z);
     scene.add(h.mesh);
+  });
+
+  cookies = (data.cookies || []).map(([z, lane]) => ({ z, lane, collected: false }));
+  cookies.forEach(c => {
+    c.mesh = makeCookieMesh();
+    c.mesh.position.set(LANES_X[c.lane], 0.95, c.z);
+    castAll(c.mesh);
+    scene.add(c.mesh);
   });
 
   exitFillEl.style.width = '0%';
@@ -1233,8 +1356,9 @@ function renderTrophyShelf(clearedCount) {
 }
 
 function startNewGame() {
-  level = 1; score = 0; ringCount = 0;
+  level = 1; score = 0; ringCount = 0; cookieCount = 0;
   camShake = 0; landSquash = 0; playerSquashY = 1; wasOnGround = true;
+  player.kicking = false; player.kickTimer = 0; player.kickCd = 0;
   sparkles.forEach(s => { scene.remove(s.mesh); s.mesh.material.dispose(); });
   sparkles = [];
   Object.assign(player, {
@@ -1283,6 +1407,7 @@ function endGame(won) {
     : `You got as far as ${LEVEL_DATA[(level - 1) % LEVEL_DATA.length].theme.name} — Score: ${score} — try again!`;
   renderTrophyShelf(won ? LEVEL_DATA.length : level - 1);
   endScreen.classList.remove('hidden');
+  kickBtn.classList.add('hidden');
   chamberMapEl.classList.add('hidden');
   levelBanner.classList.add('hidden');
   clearTimeout(showLevelBanner._t);
@@ -1325,11 +1450,27 @@ function update(dt) {
   }
 
   if (player.invuln > 0) player.invuln -= dt;
+  if (player.kickCd > 0) player.kickCd -= dt;
+  if (player.kicking) {
+    player.kickTimer -= dt;
+    if (player.kickTimer <= 0) { player.kicking = false; player.kickTimer = 0; }
+  }
 
   // crate collisions (must jump; pass-through damage, no wall-blocking)
   crates.forEach(c => {
     if (c.hit) return;
-    if (rectClose(player.z, c.z, HAZARD_RANGE) && player.laneIndex === c.lane && player.y < CRATE_HEIGHT) {
+    const sameLane = player.laneIndex === c.lane;
+    // spin kick shatters the boulder before it can land a hit
+    if (player.kicking && sameLane && rectClose(player.z, c.z, KICK_RANGE)) {
+      c.hit = true;
+      c.mesh.visible = false;
+      score += 25; scoreEl.textContent = score;
+      camShake = 0.22;
+      spawnSparkles(c.mesh.position.x, 0.6, c.mesh.position.z, 14, 0x9a8a70, 0.25);
+      sfx.smash();
+      return;
+    }
+    if (rectClose(player.z, c.z, HAZARD_RANGE) && sameLane && player.y < CRATE_HEIGHT) {
       c.hit = true; c.mesh.visible = false; damagePlayer(1);
     }
   });
@@ -1373,6 +1514,27 @@ function update(dt) {
     }
   });
 
+  // cookies: the big bonus prize
+  cookies.forEach(c => {
+    if (c.collected) return;
+    c.mesh.rotation.y += dt * 2.0;
+    c.mesh.position.y = 0.95 + Math.sin(performance.now() * 0.0035 + c.z) * 0.1;
+    const sameLane = player.laneIndex === c.lane;
+    if (sameLane && Math.abs(c.z - player.z) < MAGNET_RANGE) {
+      const pull = Math.min(1, dt * 6);
+      c.mesh.position.x += (player.x - c.mesh.position.x) * pull;
+      c.mesh.rotation.y += dt * 7;
+    }
+    if (sameLane && rectClose(player.z, c.z, PICKUP_RANGE)) {
+      c.collected = true; c.mesh.visible = false;
+      cookieCount += 1;
+      score += 50; scoreEl.textContent = score;
+      spawnSparkles(c.mesh.position.x, c.mesh.position.y, c.mesh.position.z, 16, 0xffd9a0);
+      sfx.cookie();
+      updateHud();
+    }
+  });
+
   // heart pickups: collect + animate bob/spin
   heartPickups.forEach(h => {
     if (h.collected) return;
@@ -1387,14 +1549,17 @@ function update(dt) {
     }
   });
 
-  // fire traps: pure dodge hazards now that the runner has no weapon
+  // fire vents: jump them. Only hits when the runner is below FIRE_CLEAR_Y.
   enemies.forEach(e => {
-    if (!e.alive) return;
-    e.mesh.rotation.y += dt * 4;
-    const flick = 1.4 + Math.sin(performance.now() * 0.01 + e.z) * 0.3;
-    e.mesh.children[0].material.emissiveIntensity = flick;
-    if (player.invuln <= 0 && rectClose(player.z, e.z, HAZARD_RANGE) && player.laneIndex === e.lane) {
-      e.alive = false; e.mesh.visible = false;
+    const ud = e.mesh.userData;
+    const f = 0.86 + Math.sin(performance.now() * 0.013 + e.z) * 0.14;
+    ud.flames.scale.set(1 + (f - 1) * 0.6, f, 1 + (f - 1) * 0.6);
+    ud.flames.rotation.y += dt * 2.4;
+    ud.glow.forEach(m => { m.material.emissiveIntensity = 1.9 + (f - 0.86) * 3.2; });
+    if (player.invuln <= 0
+        && rectClose(player.z, e.z, HAZARD_RANGE)
+        && player.laneIndex === e.lane
+        && player.y < FIRE_CLEAR_Y) {
       damagePlayer(1);
     }
   });
@@ -1433,18 +1598,35 @@ function update(dt) {
   playerMesh.rotation.z += (bankTarget - playerMesh.rotation.z) * Math.min(1, dt * 8);
   playerMesh.rotation.x += (0 - playerMesh.rotation.x) * Math.min(1, dt * 10);
 
-  if (moving) {
+  if (player.kicking) {
+    // 360 spin kick: whole body turns once, kicking leg whips out sideways
+    const kp = 1 - Math.max(0, player.kickTimer) / KICK_DURATION;
+    const whip = Math.sin(kp * Math.PI);
+    playerMesh.rotation.y = kp * Math.PI * 2;
+    rig.hips.rotation.y = 0;
+    rig.torso.rotation.set(0.12, 0, -whip * 0.3);
+    rig.head.rotation.set(-0.06, 0, 0);
+    rig.legR.rotation.set(-0.12 * whip, 0, -whip * 1.35);
+    rig.kneeR.rotation.x = -(0.55 - whip * 0.5);
+    rig.legL.rotation.set(0.18, 0, whip * 0.22);
+    rig.kneeL.rotation.x = -(0.3 + whip * 0.55);
+    rig.armL.rotation.set(-0.25, 0, whip * 1.2);
+    rig.armR.rotation.set(-0.25, 0, -whip * 0.95);
+    rig.elbowL.rotation.x = -0.5;
+    rig.elbowR.rotation.x = -0.62;
+  } else if (moving) {
+    playerMesh.rotation.y += (0 - playerMesh.rotation.y) * Math.min(1, dt * 14);
     // thigh swing with a small second harmonic so it is not a pure sine
     const thighL = Math.sin(s) * 0.82 + Math.sin(2 * s) * 0.07;
     const thighR = Math.sin(s + Math.PI) * 0.82 + Math.sin(2 * s + Math.PI) * 0.07;
-    rig.legL.rotation.x = thighL;
-    rig.legR.rotation.x = thighR;
+    rig.legL.rotation.set(thighL, 0, 0);
+    rig.legR.rotation.set(thighR, 0, 0);
     // knee stays near-straight at footstrike and tucks hard through recovery
     rig.kneeL.rotation.x = -(0.16 + 1.35 * Math.max(0, -Math.sin(s + 0.45)));
     rig.kneeR.rotation.x = -(0.16 + 1.35 * Math.max(0, -Math.sin(s + Math.PI + 0.45)));
     // arms drive opposite the same-side leg, elbows held bent like a real runner
-    rig.armL.rotation.x = -Math.sin(s) * 0.62;
-    rig.armR.rotation.x = -Math.sin(s + Math.PI) * 0.62;
+    rig.armL.rotation.set(-Math.sin(s) * 0.62, 0, 0);
+    rig.armR.rotation.set(-Math.sin(s + Math.PI) * 0.62, 0, 0);
     rig.elbowL.rotation.x = -(0.95 + 0.42 * Math.max(0, Math.sin(s)));
     rig.elbowR.rotation.x = -(0.95 + 0.42 * Math.max(0, Math.sin(s + Math.PI)));
     // hips and shoulders twist against each other; head steadies itself
@@ -1455,20 +1637,22 @@ function update(dt) {
     rig.head.rotation.y = Math.sin(s) * 0.055;
     rig.head.rotation.x = -0.11;
   } else if (!player.onGround) {
+    playerMesh.rotation.y += (0 - playerMesh.rotation.y) * Math.min(1, dt * 14);
     // airborne: front knee tucked up, back leg trailing, arms lifted
-    rig.legL.rotation.x = 0.95; rig.kneeL.rotation.x = -1.5;
-    rig.legR.rotation.x = -0.35; rig.kneeR.rotation.x = -0.55;
-    rig.armL.rotation.x = -1.5; rig.elbowL.rotation.x = -0.75;
-    rig.armR.rotation.x = -1.15; rig.elbowR.rotation.x = -1.0;
+    rig.legL.rotation.set(0.95, 0, 0); rig.kneeL.rotation.x = -1.5;
+    rig.legR.rotation.set(-0.35, 0, 0); rig.kneeR.rotation.x = -0.55;
+    rig.armL.rotation.set(-1.5, 0, 0); rig.elbowL.rotation.x = -0.75;
+    rig.armR.rotation.set(-1.15, 0, 0); rig.elbowR.rotation.x = -1.0;
     rig.hips.rotation.y = 0;
     rig.torso.rotation.set(0.05, 0, 0);
     rig.head.rotation.set(-0.08, 0, 0);
   } else {
+    playerMesh.rotation.y += (0 - playerMesh.rotation.y) * Math.min(1, dt * 14);
     // sliding: deep crouch with the head tucked low, knees folded under
-    rig.legL.rotation.x = 0.85; rig.kneeL.rotation.x = -1.75;
-    rig.legR.rotation.x = 0.55; rig.kneeR.rotation.x = -1.85;
-    rig.armL.rotation.x = 0.85; rig.elbowL.rotation.x = -0.35;
-    rig.armR.rotation.x = 0.7; rig.elbowR.rotation.x = -0.45;
+    rig.legL.rotation.set(0.85, 0, 0); rig.kneeL.rotation.x = -1.75;
+    rig.legR.rotation.set(0.55, 0, 0); rig.kneeR.rotation.x = -1.85;
+    rig.armL.rotation.set(0.85, 0, 0); rig.elbowL.rotation.x = -0.35;
+    rig.armR.rotation.set(0.7, 0, 0); rig.elbowR.rotation.x = -0.45;
     rig.hips.rotation.y = 0;
     rig.torso.rotation.set(0.85, 0, 0);
     rig.head.rotation.set(-0.55, 0, 0);
@@ -1496,6 +1680,12 @@ function update(dt) {
 
   updateSparkles(dt);
 
+  const kickReady = player.kickCd <= 0;
+  if (kickReady !== kickBtnReady) {
+    kickBtn.classList.toggle('cooling', !kickReady);
+    kickBtnReady = kickReady;
+  }
+
   // sun follows player for tight shadow frustum
   sun.position.set(player.x - 18, player.y + 26, player.z - 14);
   sunTarget.position.set(player.x, player.y, player.z + 6);
@@ -1519,6 +1709,7 @@ document.getElementById('start-btn').addEventListener('click', () => {
   state = 'playing';
   pauseBtn.textContent = '⏸';
   pauseBtn.classList.remove('hidden');
+  kickBtn.classList.remove('hidden');
 });
 document.getElementById('retry-btn').addEventListener('click', () => {
   ensureAudio();
@@ -1527,7 +1718,9 @@ document.getElementById('retry-btn').addEventListener('click', () => {
   state = 'playing';
   pauseBtn.textContent = '⏸';
   pauseBtn.classList.remove('hidden');
+  kickBtn.classList.remove('hidden');
 });
+kickBtn.addEventListener('click', e => { e.preventDefault(); ensureAudio(); tryKick(); dismissHint(); });
 pauseBtn.addEventListener('click', togglePause);
 document.getElementById('resume-btn').addEventListener('click', togglePause);
 
