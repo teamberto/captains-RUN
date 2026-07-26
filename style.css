@@ -584,3 +584,5 @@ html, body {
 @media (max-height: 430px) {
   #start-screen p:not(.story):not(.quest) { display: none; }
 }
+
+.picker-block.hidden { display: none; }

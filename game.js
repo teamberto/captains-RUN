@@ -1058,9 +1058,22 @@ function buildShirtPicker() {
     b.style.setProperty('--sw', '#' + opt.shirt.toString(16).padStart(6, '0'));
     b.style.setProperty('--sw-trim', '#' + opt.trim.toString(16).padStart(6, '0'));
     b.innerHTML = '<span class="sw-dot"></span><span class="sw-label">' + opt.label + '</span>';
-    b.addEventListener('click', () => { ensureAudio(); applyShirtColor(opt.id, true); sfx.ring(); });
+    // pointerdown as well as click: iOS Safari can swallow the click on an
+    // element inside a container that also handles pointer gestures
+    const choose = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      ensureAudio();
+      applyShirtColor(opt.id, true);
+      sfx.ring();
+    };
+    b.addEventListener('click', choose);
+    b.addEventListener('pointerdown', choose);
     host.appendChild(b);
   });
+  // only reveal the block once it actually has swatches in it
+  const block = document.getElementById('picker-block');
+  if (block && host.children.length) block.classList.remove('hidden');
 }
 
 const playerMesh = buildRunner(0.78);
