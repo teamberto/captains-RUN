@@ -999,13 +999,74 @@ function buildRunner(scale) {
     hips, torso, head,
     legL, legR, kneeL: knees[0], kneeR: knees[1],
     armL, armR, elbowL: elbows[0], elbowR: elbows[1],
+    // exposed so the shirt colour can be recoloured live from the menu
+    shirtMat, shirtTrimMat, shoeAccentMat,
   };
   castAll(g);
   return g;
 }
 
+// ---------- shirt colour, chosen on the menu ----------
+// Trim and shoe flashes are picked per shirt rather than shared, so the accent
+// stays readable against each one instead of clashing with half of them.
+const SHIRT_OPTIONS = [
+  { id: 'grey',  label: 'Grey',  shirt: 0x8b9299, trim: 0xe8b44a, accent: 0xd8dde1 },
+  { id: 'red',   label: 'Red',   shirt: 0xc6382c, trim: 0xf2c552, accent: 0xffd9a0 },
+  { id: 'blue',  label: 'Blue',  shirt: 0x2f6fc0, trim: 0xffb03a, accent: 0x9fd0ff },
+  { id: 'black', label: 'Black', shirt: 0x26262c, trim: 0xe8b44a, accent: 0x9aa0a8 },
+];
+const SHIRT_STORE_KEY = 'captainGo.shirt.v1';
+
+function loadShirtChoice() {
+  try {
+    const saved = localStorage.getItem(SHIRT_STORE_KEY);
+    if (saved && SHIRT_OPTIONS.some(o => o.id === saved)) return saved;
+  } catch (e) { /* private mode */ }
+  return 'blue';
+}
+let shirtChoice = loadShirtChoice();
+
+function applyShirtColor(id, persist) {
+  const opt = SHIRT_OPTIONS.find(o => o.id === id) || SHIRT_OPTIONS[2];
+  shirtChoice = opt.id;
+  const ud = playerMesh.userData;
+  ud.shirtMat.color.setHex(opt.shirt);
+  ud.shirtTrimMat.color.setHex(opt.trim);
+  ud.shoeAccentMat.color.setHex(opt.accent);
+  if (persist) {
+    try { localStorage.setItem(SHIRT_STORE_KEY, opt.id); } catch (e) { /* private mode */ }
+  }
+  document.querySelectorAll('#shirt-picker .swatch').forEach(el => {
+    const on = el.dataset.shirt === opt.id;
+    el.classList.toggle('on', on);
+    el.setAttribute('aria-checked', on ? 'true' : 'false');
+  });
+}
+
+function buildShirtPicker() {
+  const host = document.getElementById('shirt-picker');
+  if (!host) return;
+  host.innerHTML = '';
+  SHIRT_OPTIONS.forEach(opt => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'swatch';
+    b.dataset.shirt = opt.id;
+    b.setAttribute('role', 'radio');
+    b.setAttribute('aria-label', opt.label + ' shirt');
+    b.title = opt.label;
+    b.style.setProperty('--sw', '#' + opt.shirt.toString(16).padStart(6, '0'));
+    b.style.setProperty('--sw-trim', '#' + opt.trim.toString(16).padStart(6, '0'));
+    b.innerHTML = '<span class="sw-dot"></span><span class="sw-label">' + opt.label + '</span>';
+    b.addEventListener('click', () => { ensureAudio(); applyShirtColor(opt.id, true); sfx.ring(); });
+    host.appendChild(b);
+  });
+}
+
 const playerMesh = buildRunner(0.78);
 scene.add(playerMesh);
+buildShirtPicker();
+applyShirtColor(shirtChoice, false);
 
 // ---------- fireball enemies ----------
 // Temple fire vent. Deliberately LOW and WIDE so it reads as jumpable at a

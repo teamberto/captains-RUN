@@ -479,3 +479,78 @@ html, body {
 
 /* smaller pips once there are 15 chambers */
 .pip { width: 24px; height: 24px; font-size: 12px; }
+
+/* ---- shirt colour picker on the start screen ---- */
+.picker-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin: 2px 0 2px;
+}
+.picker-title {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #ffd98a;
+  opacity: .9;
+}
+#shirt-picker {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+#shirt-picker .swatch {
+  /* reset the .overlay button styling, which is built for the big PLAY pill */
+  all: unset;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  padding: 4px 2px;
+  border-radius: 10px;
+}
+#shirt-picker .sw-dot {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: var(--sw);
+  border: 3px solid rgba(255, 255, 255, .35);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, .45);
+  transition: transform .12s ease, border-color .12s ease, box-shadow .12s ease;
+  position: relative;
+}
+/* a slice of the trim colour, so the pick previews the whole outfit */
+#shirt-picker .sw-dot::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -1px;
+  transform: translateX(-50%);
+  width: 22px;
+  height: 7px;
+  border-radius: 0 0 12px 12px;
+  background: var(--sw-trim);
+}
+#shirt-picker .sw-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .5px;
+  color: rgba(255, 255, 255, .62);
+}
+#shirt-picker .swatch:hover .sw-dot { transform: scale(1.08); }
+#shirt-picker .swatch.on .sw-dot {
+  border-color: #ffd98a;
+  transform: scale(1.14);
+  box-shadow: 0 0 0 3px rgba(255, 214, 138, .35), 0 4px 12px rgba(0, 0, 0, .5);
+}
+#shirt-picker .swatch.on .sw-label { color: #ffd98a; }
+#shirt-picker .swatch:focus-visible { outline: 2px solid #ffd98a; outline-offset: 2px; }
+
+@media (prefers-reduced-motion: reduce) {
+  #shirt-picker .sw-dot { transition: none; }
+}
