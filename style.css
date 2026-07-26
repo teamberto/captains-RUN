@@ -101,9 +101,13 @@ html, body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  /* `safe` keeps the top from being clipped when the content is taller than
+     the viewport; the scroll is the fallback for very short screens. */
+  justify-content: safe center;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   gap: 14px;
-  padding: 0 24px;
+  padding: 16px 24px;
   background: radial-gradient(ellipse at center, rgba(60, 32, 8, 0.78), rgba(14, 8, 3, 0.92));
   color: #fff;
   text-align: center;
@@ -553,4 +557,30 @@ html, body {
 
 @media (prefers-reduced-motion: reduce) {
   #shirt-picker .sw-dot { transition: none; }
+}
+
+
+/* Short screens - notably a phone held in landscape - can't fit the full
+   start screen. Compact everything so the shirt picker and PLAY both stay
+   on screen rather than PLAY dropping off the bottom. */
+@media (max-height: 560px) {
+  .overlay { gap: 7px; padding: 10px 18px; }
+  .overlay h1 { font-size: clamp(22px, 6.5vh, 34px); letter-spacing: 1px; }
+  .overlay p { font-size: 13.5px; margin: 0 0 2px; line-height: 1.4; }
+  .overlay p.story { font-size: 14px; margin-bottom: 0; }
+  .overlay p.quest { font-size: 13px; }
+  .overlay button { font-size: 18px; padding: 10px 28px; }
+  .picker-block { gap: 5px; margin: 0; }
+  .picker-title { font-size: 10px; letter-spacing: 1.4px; }
+  #shirt-picker { gap: 9px; }
+  #shirt-picker .sw-dot { width: 32px; height: 32px; border-width: 2px; }
+  #shirt-picker .sw-dot::after { width: 17px; height: 5px; }
+  #shirt-picker .sw-label { font-size: 10px; }
+  #sticker-book { max-height: 22vh; }
+  #trophy-shelf .slot { width: 26px; height: 26px; font-size: 15px; }
+}
+
+/* Very short: drop the long control explainer, the hint strip already covers it */
+@media (max-height: 430px) {
+  #start-screen p:not(.story):not(.quest) { display: none; }
 }
